@@ -1,0 +1,6 @@
+# Runtime dependencies for the Regulator project.
+# Kept intentionally minimal for the stubbed skeleton. LLM and vector-store
+# dependencies will be added when those stages are implemented.
+
+python-dotenv  # Load configuration from a local .env file.
+pyyaml         # Parse human-readable YAML test cases in tests/cases/.
