@@ -15,7 +15,7 @@ from regulator.applicability import get_applicable_regulatory_procedures
 from regulator.coverage import get_batch_coverage
 from regulator.findings import promote_findings
 from regulator.parsing import parse_operating_procedure, parse_regulatory_document
-from regulator.report import get_report
+from regulator.report import get_report, render_report_markdown
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 REGULATIONS_DIR = PROJECT_ROOT / "data" / "regulations"
@@ -52,7 +52,7 @@ def main() -> None:
     # Stage 6: render the report.
     report = get_report(sop, findings)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(report.text, encoding="utf-8")
+    REPORT_PATH.write_text(render_report_markdown(report), encoding="utf-8")
     print(f"Wrote report to {REPORT_PATH} (stub)")
 
 

@@ -6,7 +6,7 @@ and which individual requirements are actually relevant to a given SOP.
 
 from __future__ import annotations
 
-from regulator.models import Atom, OperatingProcedure, RegulatoryDocument
+from regulator.models import OperatingProcedure, RegulatoryAtom, RegulatoryDocument
 
 
 def get_applicable_regulatory_procedures(
@@ -24,12 +24,12 @@ def get_applicable_regulatory_procedures(
 def get_applicable_atoms(
     sop: OperatingProcedure,
     doc: RegulatoryDocument,
-) -> list[Atom]:
+) -> list[RegulatoryAtom]:
     """Return the atomic requirements in ``doc`` that apply to ``sop``.
 
-    Will (once implemented) select the individual atoms from ``doc`` that are
-    relevant to the SOP. This is not yet wired into the pipeline; it will be
-    called from the coverage stage to focus checks on applicable requirements.
-    For now it returns an empty list.
+    Will (once implemented) select the individual :class:`RegulatoryAtom`
+    requirements from ``doc`` that are relevant to the SOP. This is not yet
+    wired into the pipeline; it will be called from the coverage stage to focus
+    checks on applicable requirements. For now it returns an empty list.
     """
     return []

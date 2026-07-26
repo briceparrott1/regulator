@@ -4,3 +4,4 @@
 
 python-dotenv  # Load configuration from a local .env file.
 pyyaml         # Parse human-readable YAML test cases in tests/cases/.
+pydantic       # Typed, validated data models for the pipeline schema.
