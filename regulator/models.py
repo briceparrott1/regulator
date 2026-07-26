@@ -25,6 +25,7 @@ class RegProfile(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    doc_id: str  # slug of the source document this profile describes
     jurisdiction: list[str]  # federal / state / country
     doc_kind: DocKind
     activities: list[str]
@@ -34,22 +35,30 @@ class RegProfile(BaseModel):
     addressee_types: list[str]  # employer, facility, procedure, manufacturer...
 
 
-class RegulatoryAtom(BaseModel):
-    """A single atomic regulatory clause with citation and provenance."""
+class RegulatoryNode(BaseModel):
+    """A node in a regulatory document's parsed hierarchy.
+
+    Documents are parsed into a tree; each node sits at some level of that tree.
+    There are two kinds. Internal nodes group their descendants and carry an
+    intro paragraph or header in ``body``. Leaf nodes carry a single clause in
+    ``body`` and are where the normative facets (``is_normative``, ``addressee``)
+    are meaningful; on internal nodes those fields keep their defaults.
+    """
 
     model_config = ConfigDict(frozen=True)
 
-    atom_id: str  # citation path: "1910.119(f)(1)(i)"
+    node_id: str  # citation path: "1910.119(f)(1)(i)"
     parent_id: str | None
-    section_lineage: list[str]
-    text: str
+    section_lineage: list[str]  # node_ids of this node's ancestors, root first
+    body: str  # leaf: a clause; internal: an intro paragraph or header
+    is_leaf: bool  # two node types: internal and leaf
     provenance: dict[str, Any]  # {page, span}
-    is_normative: bool
-    addressee: str
+    is_normative: bool = False  # only meaningful on leaves
+    addressee: str | None = None  # only meaningful on leaves
 
 
 class RegulatoryDocument(BaseModel):
-    """A parsed regulatory document with its profile and extracted atoms."""
+    """A parsed regulatory document with its profile and extracted nodes."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -61,7 +70,9 @@ class RegulatoryDocument(BaseModel):
     edition: str  # e.g. "2022"
     parse_accounting: dict[str, Any]  # {pages_total, pages_parsed, warnings[]}
     profile: RegProfile
-    atoms: list[RegulatoryAtom]
+    # Flat list; the tree shape is encoded via each node's parent_id and
+    # section_lineage rather than nesting.
+    nodes: list[RegulatoryNode]
 
 
 class SopProfile(BaseModel):
@@ -112,10 +123,10 @@ class DocApplicabilityVerdict(BaseModel):
     confidence: float
 
 
-class AtomApplicabilityVerdict(BaseModel):
-    """Whether a single regulatory atom binds and applies to the SOP."""
+class NodeApplicabilityVerdict(BaseModel):
+    """Whether a single regulatory node binds and applies to the SOP."""
 
-    atom_id: str
+    node_id: str
     binds_context: bool  # jurisdiction/activity/substance match
     sop_is_instrument: bool  # is an SOP what satisfies this clause?
     applicable: bool  # AND of above
@@ -123,9 +134,9 @@ class AtomApplicabilityVerdict(BaseModel):
 
 
 class CoverageVerdict(BaseModel):
-    """How well the SOP covers a single regulatory atom."""
+    """How well the SOP covers a single regulatory node."""
 
-    atom_id: str
+    node_id: str
     status: CoverageStatus
     sop_atom_ids: list[str] = Field(default_factory=list)
     evidence_quotes: list[str] = Field(default_factory=list)
@@ -138,7 +149,7 @@ class Finding(BaseModel):
 
     finding_id: str
     type: FindingType
-    reg_ref: dict[str, Any]  # {atom_id, quote}
+    reg_ref: dict[str, Any]  # {node_id, quote}
     sop_anchors: list[dict[str, Any]] = Field(
         default_factory=list
     )  # [{atom_id, quote}]; empty for pure gaps

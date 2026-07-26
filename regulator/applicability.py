@@ -1,4 +1,4 @@
-"""Applicability filtering: narrow regulations and atoms to the SOP.
+"""Applicability filtering: narrow regulations and nodes to the SOP.
 
 Stub implementations. These functions will decide which regulatory documents
 and which individual requirements are actually relevant to a given SOP.
@@ -6,7 +6,7 @@ and which individual requirements are actually relevant to a given SOP.
 
 from __future__ import annotations
 
-from regulator.models import OperatingProcedure, RegulatoryAtom, RegulatoryDocument
+from regulator.models import OperatingProcedure, RegulatoryDocument, RegulatoryNode
 
 
 def get_applicable_regulatory_procedures(
@@ -21,13 +21,13 @@ def get_applicable_regulatory_procedures(
     return docs
 
 
-def get_applicable_atoms(
+def get_applicable_nodes(
     sop: OperatingProcedure,
     doc: RegulatoryDocument,
-) -> list[RegulatoryAtom]:
-    """Return the atomic requirements in ``doc`` that apply to ``sop``.
+) -> list[RegulatoryNode]:
+    """Return the requirement nodes in ``doc`` that apply to ``sop``.
 
-    Will (once implemented) select the individual :class:`RegulatoryAtom`
+    Will (once implemented) select the individual :class:`RegulatoryNode`
     requirements from ``doc`` that are relevant to the SOP. This is not yet
     wired into the pipeline; it will be called from the coverage stage to focus
     checks on applicable requirements. For now it returns an empty list.

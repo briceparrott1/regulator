@@ -27,3 +27,4 @@ dist/
 
 # OS / editor cruft
 .DS_Store
+data/parsed/

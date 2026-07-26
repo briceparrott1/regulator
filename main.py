@@ -31,7 +31,11 @@ def main() -> None:
     # Stage 1: parse every regulatory document.
     regulatory_paths = sorted(REGULATIONS_DIR.glob("*.pdf"))
     regulatory_docs = [parse_regulatory_document(path) for path in regulatory_paths]
-    print(f"Parsed {len(regulatory_docs)} regulatory documents (stub)")
+    total_nodes = sum(len(doc.nodes) for doc in regulatory_docs)
+    print(
+        f"Parsed {len(regulatory_docs)} regulatory documents "
+        f"({total_nodes} nodes total)"
+    )
 
     # Stage 2: parse the SOP.
     sop = parse_operating_procedure(SOP_PATH)
