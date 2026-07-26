@@ -39,7 +39,7 @@ def main() -> None:
 
     # Stage 2: parse the SOP.
     sop = parse_operating_procedure(SOP_PATH)
-    print(f"Parsed SOP '{sop.title}' (stub)")
+    print(f"Parsed SOP '{sop.title}' ({len(sop.nodes)} nodes)")
 
     # Stage 3: narrow to the applicable regulatory documents.
     applicable = get_applicable_regulatory_procedures(sop, regulatory_docs)

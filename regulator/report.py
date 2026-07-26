@@ -26,7 +26,7 @@ def get_report(sop: OperatingProcedure, findings: list[Finding]) -> Report:
         transparency={
             "docs_excluded": [],
             "parse_accounting_summary": {},
-            "atoms_assessed": 0,
+            "nodes_assessed": 0,
             "findings_quarantined": 0,
         },
         findings=findings,

@@ -88,19 +88,27 @@ class SopProfile(BaseModel):
     internal_references: list[str]
 
 
-class SopAtom(BaseModel):
-    """A single ordered passage extracted from an SOP."""
+class SopNode(BaseModel):
+    """A node in an SOP's parsed hierarchy; mirror of :class:`RegulatoryNode`.
+
+    SOPs are parsed into a tree; each node sits at some level of that tree.
+    There are two kinds. Internal nodes group their descendants and carry a
+    heading or intro paragraph in ``body``. Leaf nodes carry a single
+    procedural step or clause in ``body``.
+    """
 
     model_config = ConfigDict(frozen=True)
 
-    atom_id: str  # "S-047"
-    section_lineage: list[str]
-    order: int
-    text: str
+    node_id: str  # "S-047"; the parser will assign ids
+    parent_id: str | None
+    section_lineage: list[str]  # node_ids of this node's ancestors, root first
+    body: str  # leaf: a step/clause; internal: a heading or intro paragraph
+    is_leaf: bool  # two node types: internal and leaf
+    order: int  # document order (SOP-specific)
 
 
 class OperatingProcedure(BaseModel):
-    """A parsed Standard Operating Procedure with its profile and atoms."""
+    """A parsed Standard Operating Procedure with its profile and nodes."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -110,7 +118,10 @@ class OperatingProcedure(BaseModel):
     title: str
     parse_accounting: dict[str, Any]  # {pages_total, pages_parsed, warnings[]}
     profile: SopProfile
-    atoms: list[SopAtom]
+    # Flat list; the tree shape is encoded via each node's parent_id and
+    # section_lineage rather than nesting. A synthetic doc-root node anchors
+    # the tree, same convention as RegulatoryDocument.
+    nodes: list[SopNode]
 
 
 # ── Verdict layer (per-run, references IDs only) ───────
@@ -138,7 +149,7 @@ class CoverageVerdict(BaseModel):
 
     node_id: str
     status: CoverageStatus
-    sop_atom_ids: list[str] = Field(default_factory=list)
+    sop_node_ids: list[str] = Field(default_factory=list)
     evidence_quotes: list[str] = Field(default_factory=list)
     reasoning: str
 
@@ -152,7 +163,7 @@ class Finding(BaseModel):
     reg_ref: dict[str, Any]  # {node_id, quote}
     sop_anchors: list[dict[str, Any]] = Field(
         default_factory=list
-    )  # [{atom_id, quote}]; empty for pure gaps
+    )  # [{node_id, quote}]; empty for pure gaps
     explanation: str
     suggested_adjustment: str
     confidence: float

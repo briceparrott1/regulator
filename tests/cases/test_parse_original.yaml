@@ -1,0 +1,1035 @@
+# ── Document ── 
+- node_id: "S-001" 
+  body: ""
+  parent_id: null 
+  section_lineage: [] 
+  is_leaf: false 
+  order: 1
+
+
+
+# ── 1. Purpose ──
+- node_id: "S-002"
+  body: "Purpose"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 2
+
+- node_id: "S-003"
+  body: "Initial Purge of Condensate Skid:  V-720, V-730, HE-735, V-740, E- 742, V-745, V-750, V-785, H-080, V-730-130, HTR-750, E-735, E-751, V-750-110, V-750-115, ET-750-100, HE-750-140, V-774-100-200-300, P-782 and 783 and P-787 and 788."
+  parent_id: "S-002"
+  section_lineage: ["S-001", "S-002"]
+  is_leaf: true
+  order: 3
+
+- node_id: "S-004"
+  body: "Purge gas used will be natural gas or nitrogen.  If natural gas will be used, a suitable spot to source the system must be selected.  Tie in natural gas or nitrogen at a low point drain between SDV-700 and PCV-705."
+  parent_id: "S-002"
+  section_lineage: ["S-001", "S-002"]
+  is_leaf: true
+  order: 4
+
+- node_id: "S-005"
+  body: "The facility is based in Pennsylvania."
+  parent_id: "S-002"
+  section_lineage: ["S-001", "S-002"]
+  is_leaf: true
+  order: 5
+
+# ── 2. References ──
+- node_id: "S-006"
+  body: "References"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 6
+
+- node_id: "S-007"
+  body: "MJV-CGP-10-0297, 0298, 0300, 0301, 0301B, 0301C, 0301D, 0302A, 0302B, 0302C, 0303, 0304, 0306, 0305A, 314A, 315, 316 and 317."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 7
+
+- node_id: "S-008"
+  body: "Majorsville Cause & Effect Matrix."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 8
+
+- node_id: "S-009"
+  body: "Vendor Manuals."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 9
+
+- node_id: "S-010"
+  body: "CNX SPCC Plan."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 10
+
+- node_id: "S-011"
+  body: "MS-SWP-0222 and MS-SWP-0223 for start-up and shutdown of electric pumps."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 11
+
+- node_id: "S-012"
+  body: "Due to the extensive amount of ancillary equipment involved in this process, not all limits are listed in the above tables.  Please refer to P&ID\u2019s MJV-CGP-10-302A, 302B and 302C for any limits not included above."
+  parent_id: "S-006"
+  section_lineage: ["S-001", "S-006"]
+  is_leaf: true
+  order: 12
+
+# ── 3. Precautions ──
+- node_id: "S-013"
+  body: "Precautions"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 13
+
+- node_id: "S-014"
+  body: "Before starting the purge, confirm the pressure in the condensate treating area is at zero psig.  Do not go above 125 psig.  Due to the MAOP V-750, operator is unable to purge with pressures exceeding 125 psig."
+  parent_id: "S-013"
+  section_lineage: ["S-001", "S-013"]
+  is_leaf: true
+  order: 14
+
+# ── 4. Special Equipment ──
+- node_id: "S-015"
+  body: "Special Equipment"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 15
+
+- node_id: "S-016"
+  body: "CNX Resources Standard PPE"
+  parent_id: "S-015"
+  section_lineage: ["S-001", "S-015"]
+  is_leaf: true
+  order: 16
+
+- node_id: "S-017"
+  body: "Calibrated personal four-gas monitor"
+  parent_id: "S-015"
+  section_lineage: ["S-001", "S-015"]
+  is_leaf: true
+  order: 17
+
+# ── 5. Operator Requirements ──
+- node_id: "S-018"
+  body: "Operator Requirements"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 18
+
+- node_id: "S-019"
+  body: "CNX Resources Site Hazard Training"
+  parent_id: "S-018"
+  section_lineage: ["S-001", "S-018"]
+  is_leaf: true
+  order: 19
+
+- node_id: "S-020"
+  body: "Complete CNX Midstream Risk Assessment or JSA.  File accordingly."
+  parent_id: "S-018"
+  section_lineage: ["S-001", "S-018"]
+  is_leaf: true
+  order: 20
+
+- node_id: "S-021"
+  body: "Document the event in the shift logs."
+  parent_id: "S-018"
+  section_lineage: ["S-001", "S-018"]
+  is_leaf: true
+  order: 21
+
+# ── 6. Procedure ──
+- node_id: "S-022"
+  body: "Procedure"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 22
+
+# ── 6.A Safe Work Practice ──
+- node_id: "S-023"
+  body: "Safe Work Practice"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: false
+  order: 23
+
+- node_id: "S-024"
+  body: "Complete CNX Risk Assessment or JSA.  File accordingly."
+  parent_id: "S-023"
+  section_lineage: ["S-001", "S-022", "S-023"]
+  is_leaf: true
+  order: 24
+
+- node_id: "S-025"
+  body: "Complete hot work permit, blowdown tracker, and non-conformance."
+  parent_id: "S-023"
+  section_lineage: ["S-001", "S-022", "S-023"]
+  is_leaf: true
+  order: 25
+
+# ── 6.B Valve Line-Up ──
+- node_id: "S-026"
+  body: "Valve Line-Up"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: false
+  order: 26
+
+- node_id: "S-027"
+  body: "All PSV\u2019s throughout the wet skid should be in the locked and open position."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 27
+
+- node_id: "S-028"
+  body: "All instrumentation shall be lined up and functional including all manual site glasses and gauges."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 28
+
+- node_id: "S-029"
+  body: "Operator close all high point vents and low point drains on all vessels throughout the wet skid."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 29
+
+- node_id: "S-030"
+  body: "Operator close 6\u201d manual block valve on slug catcher condensate line located upstream of SDV-700 slug catcher condensate outlet valve."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 30
+
+- node_id: "S-031"
+  body: "Operator place SDV-700 in HAND in the closed position from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 31
+
+- node_id: "S-032"
+  body: "Operator to open PCV-705 to 100% from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 32
+
+- node_id: "S-033"
+  body: "Operator to open 6\u201d ball valve downstream of PVC-705."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 33
+
+- node_id: "S-034"
+  body: "Operator to open 6\u201d ball valve on the (1) inlet and (1) outlet of F-715 A and B."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 34
+
+- node_id: "S-035"
+  body: "Operator close 2\u201d ball valve on recycle line inlet of V-720."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 35
+
+- node_id: "S-036"
+  body: "Operator open 6\u201d ball valve on the (1) outlet of V-720."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 36
+
+- node_id: "S-037"
+  body: "Operator close fuel gas line to V-720."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 37
+
+- node_id: "S-038"
+  body: "Operator open 3\u201d ball valve upstream and downstream of PCV-724."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 38
+
+- node_id: "S-039"
+  body: "Operator put PCV-724 in hand at 0% from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 39
+
+- node_id: "S-040"
+  body: "Operator open SDV-725 from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 40
+
+- node_id: "S-041"
+  body: "Operator verify LCV-720 is closed from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 41
+
+- node_id: "S-042"
+  body: "Operator close 6\u201d bypass ball valve on V-720."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 42
+
+- node_id: "S-043"
+  body: "Operator open 6\u201d inlet and outlet valves on V-730."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 43
+
+- node_id: "S-044"
+  body: "Operator close 6\u201d bypass ball valve on V-730."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 44
+
+- node_id: "S-045"
+  body: "Operator close XV-730 from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 45
+
+- node_id: "S-046"
+  body: "Operator set TCV-735 to 100% in order to direct flow to inside tube side of E-735 from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 46
+
+- node_id: "S-047"
+  body: "Operator open (2) 3\u201d ball valves inlet and outlet of E-735 shell side."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 47
+
+- node_id: "S-048"
+  body: "Operator open (2) 2\u201d ball valves inlet and outlet of FCV-740 from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 48
+
+- node_id: "S-049"
+  body: "Operator open FCV-740 to 100%."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 49
+
+- node_id: "S-050"
+  body: "Operator close 2\u201d bypass ball valve FCV-740."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 50
+
+- node_id: "S-051"
+  body: "Operator open air bypass SDV on SDV-740 to force open the valve."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 51
+
+- node_id: "S-052"
+  body: "Operator open 1\u201d ball valve inlet and outlet of PCV-740B of V-740 flash drum."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 52
+
+- node_id: "S-053"
+  body: "Operator close 1\u201d bypass ball valve on V-740 flash drum."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 53
+
+- node_id: "S-054"
+  body: "Operator place PCV-740B in AUTO at desired pressure from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 54
+
+- node_id: "S-055"
+  body: "Operator close LCV-740A from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 55
+
+- node_id: "S-056"
+  body: "Operator open LCV-740B from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 56
+
+- node_id: "S-057"
+  body: "Operator open (4) 3\u201d ball valves on the outlet of V-740."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 57
+
+- node_id: "S-058"
+  body: "Operator open 3\u201d ball valve at Y connection feed to V-745 and V-750-100."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 58
+
+- node_id: "S-059"
+  body: "Operator open (3) 3\u201d ball valves on inlet and outlet of TCV-742."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 59
+
+- node_id: "S-060"
+  body: "Operator set TCV-742 to 50% from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 60
+
+- node_id: "S-061"
+  body: "Operator close 2\u201d bypass valve around TCV-742."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 61
+
+- node_id: "S-062"
+  body: "Operator open 3\u201d ball valve on inlet and outlet of E-742."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 62
+
+- node_id: "S-063"
+  body: "Operator close 3\u201d bypass ball valve on E-742 shell side."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 63
+
+- node_id: "S-064"
+  body: "Operator open 3\u201d ball valves (2) on inlet and outlet of AC-746."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 64
+
+- node_id: "S-065"
+  body: "Operator close 3\u201d bypass ball valve on AC-746."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 65
+
+- node_id: "S-066"
+  body: "Operator open 4\u201d inlet ball valve to V-745 cool feed."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 66
+
+- node_id: "S-067"
+  body: "Operator open 4\u201d inlet ball valve to V-745 warm feed."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 67
+
+- node_id: "S-068"
+  body: "Operator open 6\u201d inlet ball valve from E-745 vapor line."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 68
+
+- node_id: "S-069"
+  body: "Operator open 4\u201d outlet ball valve from V-745 to E-745."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 69
+
+- node_id: "S-070"
+  body: "Operator open 4\u201d vapor line ball valve from V-745 to VRU-785 A and B."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 70
+
+- node_id: "S-071"
+  body: "Operator open 3\u201d ball valve on inlet and outlet of FCV-745-103."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 71
+
+- node_id: "S-072"
+  body: "Operator open FCV-745-103 to 100%."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 72
+
+- node_id: "S-073"
+  body: "Operator close 2\u201d bypass ball valve FCV-745-103."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 73
+
+- node_id: "S-074"
+  body: "Operator open 3\u201d outlet ball valve from AC-746 to V-780 surge drum."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 74
+
+- node_id: "S-075"
+  body: "Operator open 2\u201d ball valve at Y connection feed to V-745 and V-750-100."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 75
+
+- node_id: "S-076"
+  body: "Operator open 2\u201d ball valves on inlet and outlet of FCV-750-140."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 76
+
+- node_id: "S-077"
+  body: "Operator close 2\u201d bypass ball valve to FCV-750-140."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 77
+
+- node_id: "S-078"
+  body: "Operator to open FCV-750-140 to 100% from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 78
+
+- node_id: "S-079"
+  body: "NOTE:  Fuel gas pressure is needed to regulate the following:"
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: false
+  order: 79
+
+- node_id: "S-080"
+  body: "SDV-740-140."
+  parent_id: "S-079"
+  section_lineage: ["S-001", "S-022", "S-026", "S-079"]
+  is_leaf: true
+  order: 80
+
+- node_id: "S-081"
+  body: "LCV-750-130."
+  parent_id: "S-079"
+  section_lineage: ["S-001", "S-022", "S-026", "S-079"]
+  is_leaf: true
+  order: 81
+
+- node_id: "S-082"
+  body: "SDV-750-120."
+  parent_id: "S-079"
+  section_lineage: ["S-001", "S-022", "S-026", "S-079"]
+  is_leaf: true
+  order: 82
+
+- node_id: "S-083"
+  body: "Operator open all valves on the inlet and outlet of tube and shell side of HE-750-140."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 83
+
+- node_id: "S-084"
+  body: "Operator close 2\u201d bypass ball valve on the tube side of HE-750-140."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 84
+
+- node_id: "S-085"
+  body: "Operator open 2\u201d ball valve on inlet and outlet of V-750-130."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 85
+
+- node_id: "S-086"
+  body: "Operator adjust PCV-750-150 to fully open."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 86
+
+- node_id: "S-087"
+  body: "Operator open (2) 3\u201d ball valves on the outlet from V-750-110 to VRU-785 A and B."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 87
+
+- node_id: "S-088"
+  body: "Operator open 2\u201d outlet ball valve on V-750-110 to V-750-115."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 88
+
+- node_id: "S-089"
+  body: "Operator open (2) 2\u201d ball valves between V-750-115 and V-740."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 89
+
+- node_id: "S-090"
+  body: "Operator open 1\u201d ball valve on inlet and the outlet of LCV-750-115."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 90
+
+- node_id: "S-091"
+  body: "Operator open (3) 3\u201d ball valves on inlet and outlet of E-751."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 91
+
+- node_id: "S-092"
+  body: "Operator open 3\u201d ball valve on inlet and outlet of V-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 92
+
+- node_id: "S-093"
+  body: "Operator close 3\u201d bypass ball valve on V-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 93
+
+- node_id: "S-094"
+  body: "Operator open 4\u201d ball valve on V-780 to P-787 and P-788."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 94
+
+- node_id: "S-095"
+  body: "Operator close 3\u201d inlet ball valve of SDV-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 95
+
+- node_id: "S-096"
+  body: "Operator to open 4\u201d inlet ball valves to P-787 and P-788."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 96
+
+- node_id: "S-097"
+  body: "Operator to open 3\u201d outlet ball valves on P-787 and P-788."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 97
+
+- node_id: "S-098"
+  body: "Operator to close 3\u201d recycle valve from P-787 and P-788 to V-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 98
+
+- node_id: "S-099"
+  body: "Operator to close 3\u201d inlet ball valve to mole sieve dryer skid on outlet of P-787 and P-788."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 99
+
+- node_id: "S-100"
+  body: "Operator open (3) 3\u201d ball valves at Y connection to bypass mole sieve dryers."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 100
+
+- node_id: "S-101"
+  body: "NOTE:  Refer to mole sieve dryer purge procedure MS-SWP-0173."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 101
+
+- node_id: "S-102"
+  body: "Operator close 6\u201d ball valve on outlet of NGL dry product filters."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 102
+
+- node_id: "S-103"
+  body: "Operator close 3\u201d ball valves on inlet and outlet of LCV-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 103
+
+- node_id: "S-104"
+  body: "Operator close 2\u201d bypass ball valve of LCV-780."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 104
+
+- node_id: "S-105"
+  body: "Operator place LCV-780 in hand at 0% from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 105
+
+- node_id: "S-106"
+  body: "Operator open (2) 6\u201d ball valves on the inlet to the measurement skid."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 106
+
+- node_id: "S-107"
+  body: "Operator open 3\u201d ball valve on inlet of V-720 and tank farm."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 107
+
+- node_id: "S-108"
+  body: "Operator close 6\u201d ball valve inlet of MarkWest measurement line."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 108
+
+- node_id: "S-109"
+  body: "Operator close 6\u201d bypass ball valve to MarkWest measurement line."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 109
+
+- node_id: "S-110"
+  body: "Operator open 2\u201d inlet ball valve to SDV-797."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 110
+
+- node_id: "S-111"
+  body: "Operator open 2\u201d choke valve on the outlet of PCV-797."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 111
+
+- node_id: "S-112"
+  body: "Operator open 2\u201d ball valve outlet of PCV-797."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 112
+
+- node_id: "S-113"
+  body: "Operator places SDV-797 in hand 100% open from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 113
+
+- node_id: "S-114"
+  body: "Operator places PCV-797 in hand 100% open from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 114
+
+- node_id: "S-115"
+  body: "Operator open 2\u201d inlet ball valve to SDV-798"
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 115
+
+- node_id: "S-116"
+  body: "Operator open 2\u201d choke valve on the outlet of PCV-798."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 116
+
+- node_id: "S-117"
+  body: "Operator close 2\u201d ball valve outlet of PCV-798."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 117
+
+- node_id: "S-118"
+  body: "Operator place SDV-798 in HAND 100% open from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 118
+
+- node_id: "S-119"
+  body: "Operator place PCV-798 in HAND 100% open from Scada."
+  parent_id: "S-026"
+  section_lineage: ["S-001", "S-022", "S-026"]
+  is_leaf: true
+  order: 119
+
+# ── 6.C Continuous Purging ──
+- node_id: "S-120"
+  body: "Continuous Purging"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: false
+  order: 120
+
+- node_id: "S-121"
+  body: "NOTE:  If continuous purging is preferred or necessary, proceed with this section C.  If step-up and stepdown purging is preferred or necessary, proceed with section D below."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 121
+
+- node_id: "S-122"
+  body: "Slowly increase wet skid pressure to 100-120 psig by using low point drain between SDV-700 and PCV-705."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 122
+
+- node_id: "S-123"
+  body: "Operator continue to check for leaks throughout the plant especially at the areas where piping may have been opened for maintenance."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 123
+
+- node_id: "S-124"
+  body: "Operator should monitor gas detectors and fire eyes during this process."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 124
+
+- node_id: "S-125"
+  body: "After pressure is verified to be 100-120 psig throughout the wet skid, operator will open (2) 1-\u00bd\u201d gate valves on P-787 and P-788 to high pressure flare and leave open until any and all present oxygen has been purged from the system."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 125
+
+- node_id: "S-126"
+  body: "Operator to maintain 100-120 psig during the continuous purge process by regulating purge gas at low point drain between SDV-700 and PCV-705."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 126
+
+- node_id: "S-127"
+  body: "After all present oxygen has been purged from the wet skid, operator will close low point drain between SDV-700 and PCV-705."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 127
+
+- node_id: "S-128"
+  body: "Operator to close (2) 1-\u00bd\u201d gate valves on P-787 and P-788 to high pressure flare."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 128
+
+- node_id: "S-129"
+  body: "NOTE:  To verify that oxygen is completely purged, operator to crack high point vent and check for oxygen on all vessels."
+  parent_id: "S-120"
+  section_lineage: ["S-001", "S-022", "S-120"]
+  is_leaf: true
+  order: 129
+
+# ── 6.D Step-Up and Stepdown Purging ──
+- node_id: "S-130"
+  body: "Step-Up and Stepdown Purging"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: false
+  order: 130
+
+- node_id: "S-131"
+  body: "Slowly increase wet skid pressure to 50-120 psig by using low point drain between SDV-700 and PCV-705."
+  parent_id: "S-130"
+  section_lineage: ["S-001", "S-022", "S-130"]
+  is_leaf: true
+  order: 131
+
+- node_id: "S-132"
+  body: "After the gas pressure is verified to be 50 psig throughout the wet skid, operator to close low point drain between SDV-700 and PCV-705."
+  parent_id: "S-130"
+  section_lineage: ["S-001", "S-022", "S-130"]
+  is_leaf: true
+  order: 132
+
+- node_id: "S-133"
+  body: "Operator opens (2) 1-\u00bd\u201d gate valves on P-787 and P-788 to high pressure flare."
+  parent_id: "S-130"
+  section_lineage: ["S-001", "S-022", "S-130"]
+  is_leaf: true
+  order: 133
+
+- node_id: "S-134"
+  body: "After pressure has been blow down, repeat all steps above for 100 psig purge test and 120 psig thereafter."
+  parent_id: "S-130"
+  section_lineage: ["S-001", "S-022", "S-130"]
+  is_leaf: true
+  order: 134
+
+- node_id: "S-135"
+  body: "NOTE:  To verify that oxygen is completely purged, operator to crack high point vent and check for oxygen on all vessels."
+  parent_id: "S-130"
+  section_lineage: ["S-001", "S-022", "S-130"]
+  is_leaf: true
+  order: 135
+
+- node_id: "S-136"
+  body: "By signing below I acknowledge that I safely completed the above referenced task, thereby following the prescribed steps in the procedure."
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: true
+  order: 136
+
+- node_id: "S-137"
+  body: "Print Name:  \t\t\t\t\t\t\t\t\t\t\t\t"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: true
+  order: 137
+
+- node_id: "S-138"
+  body: "Signature:  \t\t\t\t\t\t\t\t\t\t\t\t\t"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: true
+  order: 138
+
+- node_id: "S-139"
+  body: "Date:  \t\t\t\t\t\t\t\t\t\t\t\t\t"
+  parent_id: "S-022"
+  section_lineage: ["S-001", "S-022"]
+  is_leaf: true
+  order: 139
+
+# ── 7. Revisions ──
+- node_id: "S-140"
+  body: "Revisions"
+  parent_id: "S-001"
+  section_lineage: ["S-001"]
+  is_leaf: false
+  order: 140
+
+- node_id: "S-141"
+  body: "Revision (3) Date May 27, 2016"
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 141
+
+- node_id: "S-142"
+  body: "Revision (4) Date October 14, 2020"
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 142
+
+- node_id: "S-143"
+  body: "Reformatted to match new standard format."
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 143
+
+- node_id: "S-144"
+  body: "Revision (5) Date August 1, 2022"
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 144
+
+- node_id: "S-145"
+  body: "Added section 7."
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 145
+
+- node_id: "S-146"
+  body: "Revised per approver review."
+  parent_id: "S-140"
+  section_lineage: ["S-001", "S-140"]
+  is_leaf: true
+  order: 146

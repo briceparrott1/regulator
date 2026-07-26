@@ -11,15 +11,22 @@ PYTHON := .venv/bin/python
 
 .DEFAULT_GOAL := help
 
-.PHONY: help parse clear
+.PHONY: help parse parse-sop clear
 
 help:
 	@echo "Regulator make targets:"
 	@echo "  make parse DOC=<flag>   Parse one regulatory PDF into output/<flag>/"
-	@echo "  make clear DOC=<flag>   Delete output/<flag>/"
+	@echo "  make parse-sop          Parse data/sop/original.docx into output/sop/"
+	@echo "  make clear DOC=<flag>   Delete output/<flag>/ (e.g. DOC=sop)"
 	@echo "  make help               Show this message"
 	@echo ""
 	@echo "<flag> is a case-insensitive substring of a data/regulations/*.pdf name."
+
+parse-sop:
+	$(PYTHON) -c "from pathlib import Path; from dotenv import load_dotenv; \
+from regulator.parsing import parse_operating_procedure; load_dotenv(); \
+d = parse_operating_procedure(Path('data/sop/original.docx'), Path('output/sop')); \
+print(f'Parsed SOP {d.doc_id!r}: {len(d.nodes)} nodes -> output/sop/{d.doc_id}.jsonl')"
 
 parse:
 ifndef DOC
