@@ -7,3 +7,4 @@ pyyaml         # Parse human-readable YAML test cases in tests/cases/.
 pydantic       # Typed, validated data models for the pipeline schema.
 anthropic      # Claude client used to propose regulatory node structure.
 pdfplumber     # Deterministic per-page text extraction from regulatory PDFs.
+python-docx    # Style-aware paragraph extraction from the SOP DOCX.

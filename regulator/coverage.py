@@ -15,8 +15,8 @@ def get_batch_coverage(
 ) -> list[CoverageVerdict]:
     """Check ``sop`` against the applicable regulatory documents.
 
-    Will (once implemented) gather the applicable atoms from ``docs`` and, for
+    Will (once implemented) gather the applicable nodes from ``docs`` and, for
     each, determine whether the SOP covers it, producing one
-    :class:`CoverageVerdict` per atom. For now it returns an empty list.
+    :class:`CoverageVerdict` per node. For now it returns an empty list.
     """
     return []

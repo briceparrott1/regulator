@@ -43,8 +43,10 @@ The general back-and-forth between you and the captain follows this cycle:
 - Dependencies are installed in `.venv/` (gitignored). Point your IDE interpreter there.
 - Run the pipeline: `.venv/bin/python main.py` — writes `output/report.md` and prints a per-stage summary.
 - Parse one regulatory doc: `make parse DOC=<flag>` — `<flag>` is a case-insensitive substring of a `data/regulations/*.pdf` name; writes JSONL to `output/<flag>/`. Remove that output with `make clear DOC=<flag>`. (`make help` lists targets; the flag→file resolution lives in `regulator.parse_cli`, runnable directly as `.venv/bin/python -m regulator.parse_cli <flag> --out output/<flag>`.)
-- Run the eval harness: `.venv/bin/python -m regulator.evaluation` — executes YAML test cases from `tests/cases/`.
+- Parse the SOP: `make parse-sop` — parses `data/sop/original.docx` (deterministic atomization; one Haiku call for the profile) into `output/sop/`; `make clear DOC=sop` removes it.
+- Run the eval harness: `.venv/bin/python -m regulator.evaluation` — executes YAML test cases from `tests/cases/`. Two formats: task-keyed cases (regulatory parse, inclusion matching) and bare-list cases (SOP full-tree exact comparison).
 - Regulatory-document parsing stage is documented in `docs/parsing/regulation_docs.md` (pipeline, node model, worked example, failure handling).
+- SOP (operating-procedure) parsing stage is documented in `docs/parsing/operating_procedure.md` (deterministic style→depth atomization, node model, worked example, edge cases).
 - Lint/format: `.venv/bin/ruff check .` and `.venv/bin/black --check .` (both must pass).
 
 ## Maintaining This File

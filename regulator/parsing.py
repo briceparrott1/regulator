@@ -25,10 +25,12 @@ from regulator.models import (
     RegProfile,
     RegulatoryDocument,
     RegulatoryNode,
+    SopNode,
     SopProfile,
 )
 from regulator.parse_store import write_parsed_document
 from regulator.pdf_extract import PageRecord, extract_pages
+from regulator.sop_extract import extract_sop
 
 # Where parsed documents are persisted as flat JSONL.
 PARSED_DIR = Path(__file__).resolve().parent.parent / "data" / "parsed"
@@ -530,26 +532,203 @@ def parse_regulatory_document(
     return document
 
 
-def parse_operating_procedure(path: Path) -> OperatingProcedure:
-    """Parse a Standard Operating Procedure into an :class:`OperatingProcedure`.
+# ── SOP parsing ─────────────────────────────────────────
+# The SOP's Word styles form a strict hierarchy ladder. Heading styles nest
+# CNXL1 < CNXL3 < CNXL4 < CNXL5; the "*Body" (and "List Paragraph") styles are
+# body-level content that attach as leaves one level below their heading tier.
+# Each style maps to an integer depth; a paragraph's parent is the most recent
+# paragraph at a strictly shallower depth (the synthetic root sits at depth 0).
+_SOP_STYLE_LEVELS = {
+    "CNXL1": 1,
+    "CNXL1Body": 2,
+    "CNXL3": 2,
+    "CNXL3Body": 3,
+    "List Paragraph": 3,
+    "CNXL4": 3,
+    "CNXL5": 4,
+}
 
-    Will (once implemented) read the DOCX at ``path`` and segment it into
-    ordered atoms. For now it returns a placeholder procedure with empty
-    accounting, an empty profile, and no atoms.
+# Deterministic internal-reference patterns. Kept deliberately simple and
+# readable; near-misses are acceptable since references are not part of the
+# node tree the truth case checks.
+_SOP_REFERENCE_PATTERNS = (
+    re.compile(r"MJV-CGP-[0-9A-Za-z]+"),
+    re.compile(r"MS-SWP-\d+"),
+    re.compile(r"P&ID"),
+    re.compile(r"SPCC Plan"),
+    re.compile(r"Cause & Effect Matrix"),
+    re.compile(r"Vendor Manuals"),
+)
+
+_SOP_PROFILE_SYSTEM_PROMPT = """\
+You read the text of a Standard Operating Procedure (SOP) for an industrial
+facility and return a compact structured profile as JSON, of this exact shape:
+{
+  "jurisdiction": ["state or country whose rules apply, e.g. 'Pennsylvania'"],
+  "industry": "the single industry this SOP belongs to, e.g. 'midstream
+                natural gas processing' ('' if unknown)",
+  "activities": ["operational activities the SOP covers"],
+  "substances": ["substances / materials handled"],
+  "equipment": ["notable equipment / vessels / valves involved"]
+}
+Use [] for lists you cannot determine and "" for unknown strings. Output ONLY
+the JSON object, no prose and no code fences.
+"""
+
+
+def _extract_internal_references(text: str) -> list[str]:
+    """Collect distinct internal references from ``text`` in first-seen order."""
+    seen: dict[str, None] = {}
+    for pattern in _SOP_REFERENCE_PATTERNS:
+        for match in pattern.finditer(text):
+            seen.setdefault(match.group(0), None)
+    return list(seen)
+
+
+def _build_sop_profile(
+    llm: StructureLLM, full_text: str, internal_references: list[str]
+) -> SopProfile:
+    """Derive a :class:`SopProfile` from the SOP text via one Haiku call.
+
+    ``internal_references`` are computed deterministically upstream and passed
+    through unchanged; the LLM only fills the descriptive facets. Profiling is
+    best-effort — any failure yields an empty-but-valid profile.
     """
-    return OperatingProcedure(
-        doc_id=path.stem,
-        source_path=str(path),
-        file_hash="",
-        title=path.stem,
-        parse_accounting={"pages_total": 0, "pages_parsed": 0, "warnings": []},
-        profile=SopProfile(
+    try:
+        data = llm.propose_json(_SOP_PROFILE_SYSTEM_PROMPT, full_text, max_tokens=1500)
+        return SopProfile(
+            jurisdiction=[str(x) for x in data.get("jurisdiction", [])],
+            industry=str(data.get("industry") or ""),
+            activities=[str(x) for x in data.get("activities", [])],
+            substances=[str(x) for x in data.get("substances", [])],
+            equipment=[str(x) for x in data.get("equipment", [])],
+            internal_references=internal_references,
+        )
+    except Exception:  # noqa: BLE001 — profiling is best-effort, never fatal
+        return SopProfile(
             jurisdiction=[],
             industry="",
             activities=[],
             substances=[],
             equipment=[],
-            internal_references=[],
-        ),
-        atoms=[],
+            internal_references=internal_references,
+        )
+
+
+def parse_operating_procedure(
+    path: Path, out_dir: Path | None = None
+) -> OperatingProcedure:
+    """Parse a Standard Operating Procedure DOCX into an ``OperatingProcedure``.
+
+    The document's Word styles already encode its hierarchy, so unlike the
+    regulatory path no LLM is used for structure. We read the ordered non-empty
+    paragraphs verbatim, map each style to a depth, and rebuild the tree with a
+    style-level stack: a paragraph's parent is the most recent paragraph at a
+    strictly shallower depth. A synthetic document root (``S-001``, empty body,
+    ``parent_id`` None) anchors the tree; content ids ``S-002``.. are assigned
+    in document order, with ``order`` a 1-based running index. ``is_leaf`` and
+    ``section_lineage`` are derived from the finished tree. Only the profile
+    facets use one best-effort Haiku call.
+
+    The parsed procedure is written as flat JSONL to ``out_dir`` when given,
+    otherwise to the default :data:`PARSED_DIR`.
+    """
+    path = Path(path)
+    file_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    doc_id = _slug(path.stem)
+
+    extraction = extract_sop(path)
+
+    root_id = "S-001"
+    nodes: list[SopNode] = [
+        SopNode(
+            node_id=root_id,
+            parent_id=None,
+            section_lineage=[],
+            body="",
+            is_leaf=False,
+            order=1,
+        )
+    ]
+
+    warnings: list[str] = []
+    unknown_styles: set[str] = set()
+
+    # Build the tree with a depth stack seeded by the synthetic root at depth 0.
+    # Each stack entry is (node_id, depth). A paragraph pops every entry at its
+    # own depth or deeper, then attaches to whatever remains on top.
+    stack: list[tuple[str, int]] = [(root_id, 0)]
+    # node_id -> (parent_id, lineage) so is_leaf can be derived after the walk.
+    parent_of: dict[str, str] = {}
+    lineage_of: dict[str, list[str]] = {}
+
+    for index, record in enumerate(extraction.paragraphs):
+        node_id = f"S-{index + 2:03d}"
+        order = index + 2
+        level = _SOP_STYLE_LEVELS.get(record.style)
+        if level is None:
+            # Unknown style: treat as body content one level below the current
+            # node so it lands as a leaf, and warn once per style name.
+            unknown_styles.add(record.style)
+            level = stack[-1][1] + 1
+
+        while len(stack) > 1 and stack[-1][1] >= level:
+            stack.pop()
+        parent_id = stack[-1][0]
+        parent_of[node_id] = parent_id
+        lineage_of[node_id] = lineage_of.get(parent_id, []) + [parent_id]
+
+        nodes.append(
+            SopNode(
+                node_id=node_id,
+                parent_id=parent_id,
+                section_lineage=lineage_of[node_id],
+                body=record.text,
+                is_leaf=True,  # provisional; corrected once the tree is known
+                order=order,
+            )
+        )
+        stack.append((node_id, level))
+
+    # A node is internal iff some other node names it as parent.
+    has_child = set(parent_of.values())
+    nodes = [
+        node.model_copy(update={"is_leaf": node.node_id not in has_child})
+        for node in nodes
+    ]
+
+    for style in sorted(unknown_styles):
+        warnings.append(f"unknown style {style!r}: attached as leaf content")
+    if extraction.skipped_empty:
+        warnings.append(
+            f"skipped {extraction.skipped_empty} empty paragraph(s) "
+            f"of {extraction.total_paragraphs} total"
+        )
+
+    full_text = "\n".join(record.text for record in extraction.paragraphs)
+    internal_references = _extract_internal_references(full_text)
+    profile = _build_sop_profile(StructureLLM(), full_text, internal_references)
+
+    pages_total = (
+        extraction.pages_total
+        if extraction.pages_total is not None
+        else extraction.total_paragraphs
     )
+    parse_accounting = {
+        "pages_total": pages_total,
+        "pages_parsed": pages_total,
+        "warnings": warnings,
+    }
+
+    procedure = OperatingProcedure(
+        doc_id=doc_id,
+        source_path=str(path),
+        file_hash=file_hash,
+        title=extraction.title or doc_id,
+        parse_accounting=parse_accounting,
+        profile=profile,
+        nodes=nodes,
+    )
+
+    write_parsed_document(procedure, out_dir if out_dir is not None else PARSED_DIR)
+    return procedure
