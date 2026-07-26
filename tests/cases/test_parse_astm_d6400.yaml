@@ -1,0 +1,56 @@
+# Parse test — ASTM D6400-23
+# Verified visually (VLM pass over rendered pages 1–3 of content) on 2026-07-25.
+#
+# Assumptions:
+#   - NOTE paragraphs (Note 1–5) and footnotes fold into their parent node's body;
+#     they are NOT separate nodes.
+#   - iTeh "Document Preview" watermark/banner pages and duplicated preview images
+#     must be excluded from all bodies (tripwire: none of the expected bodies
+#     contain "iTeh" or "Document Preview").
+#   - Top-level sections (1–10) have parent_id: null (no synthetic document root).
+#     If your parser adds a root node, expect node_count +1 and roots' parent_id set.
+#   - node_count counts enumerated units only (sections + numbered clauses).
+#     Exact enumerated inventory on verified pages = 51 nodes
+#     (10 top-level sections; 41 descendants; deepest node: 6.3.1.1).
+#     Tolerance covers the trailing "Summary of Changes" section (referenced in
+#     front matter, not visually verified) and root-node convention differences.
+
+task: parse_regulatory_document
+document: data/regulations/REG-ASTM D6400.pdf
+expect:
+  node_count: {min: 46, max: 58}
+  contains_nodes:
+    - node_id: "1"                       # "Scope" — top-level internal node
+      is_leaf: false
+      parent_id: null
+      body_contains: "Scope"
+
+    - node_id: "1.1"                     # first clause of Scope
+      is_leaf: true
+      parent_id: "1"
+      body_contains: "municipal and industrial aerobic composting facilities"
+
+    - node_id: "3.1.2"                   # definition: compostable plastic
+      parent_id: "3.1"
+      section_lineage: ["3", "3.1"]
+      body_contains: "compostable plastic"
+
+    - node_id: "5.1.3"                   # basic requirement: plant growth
+      is_leaf: true
+      section_lineage: ["5", "5.1"]
+      body_contains: "support plant growth"
+
+    - node_id: "6.2"                     # disintegration requirement (childless → leaf)
+      is_leaf: true
+      parent_id: "6"
+      body_contains: "2.0-mm sieve"
+
+    - node_id: "6.3.1"                   # INTERNAL node with substantive body (stem
+      is_leaf: false                     # carries the 90% requirement; child 6.3.1.1)
+      parent_id: "6.3"
+      body_contains: "Ninety percent"
+
+    - node_id: "6.3.1.1"                 # deepest node in the document
+      is_leaf: true
+      section_lineage: ["6", "6.3", "6.3.1"]
+      body_contains: "tested individually"

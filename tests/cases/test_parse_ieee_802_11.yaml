@@ -1,0 +1,61 @@
+# Parse test — "REG-IEEE 802.11.pdf"
+# Verified visually (VLM pass over all 11 rendered pages) on 2026-07-25.
+#
+# IMPORTANT: this file is NOT the IEEE 802.11 standard. It is a university course
+# handout: "Introduction to IEEE 802.11 standards" (Z. Mammeri – UPS), 11 pages.
+# The parser must still produce a valid tree from it — dialect: "I.1" decimal
+# numbering with LETTERED subsections a)–g).
+#
+# Key structural trap: lettered subsection labels RESTART under each parent.
+# "a) Physical Layer" lives under I.1.1 and "a) Enhanced Distributed Coordination
+# Function (EDCF)" lives under I.1.2. node_ids must be full paths (I.1.1.a vs
+# I.1.2.a) — two test nodes below fail on any parser that collides them.
+#
+# Assumptions:
+#   - Bullet lists (STA/AP/BSS bullets, SIFS/PIFS/DIFS/EIFS bullets, solution
+#     bullets on p.10–11) fold into their lettered subsection's body; not nodes.
+#   - Figure/table captions (Figures 1–10, Table 1) are not nodes.
+#   - Title block / author line is not a node; I.1 has parent_id: null.
+#   - Enumerated inventory: I.1; I.1.1 + subsections a–g (7); I.1.2 + subsections
+#     a–e (5) = 15 nodes. Tolerance allows a synthetic root or front-matter node
+#     and minor splitting differences.
+
+task: parse_regulatory_document
+document: data/regulations/REG-IEEE 802.11.pdf
+expect:
+  node_count: {min: 15, max: 24}
+  contains_nodes:
+    - node_id: "I.1"                     # top-level: "QoS in Wireless networks";
+      is_leaf: false                     # internal node WITH substantive intro body
+      parent_id: null
+      body_contains: "lacks QoS provisioning"
+
+    - node_id: "I.1.1"                   # "IEEE 802.11 Standard (WiFi)" — internal,
+      is_leaf: false                     # has intro text + children a–g
+      parent_id: "I.1"
+      body_contains: "first WLAN standard"
+
+    - node_id: "I.1.1.a"                 # "Physical Layer" — first of the duplicate
+      is_leaf: true                      # "a)" labels; must NOT collide with I.1.2.a
+      section_lineage: ["I.1", "I.1.1"]
+      body_contains: "Direct sequence spread spectrum"
+
+    - node_id: "I.1.1.d"                 # "Interframe space (IFS)"
+      is_leaf: true
+      parent_id: "I.1.1"
+      body_contains: "four types of interframe spaces"
+
+    - node_id: "I.1.2"                   # "IEEE 802.11e standard for QoS" — internal
+      is_leaf: false
+      parent_id: "I.1"
+      body_contains: "Hybrid Coordination Function"
+
+    - node_id: "I.1.2.a"                 # "EDCF" — second of the duplicate "a)"
+      is_leaf: true                      # labels; the collision tripwire
+      section_lineage: ["I.1", "I.1.2"]
+      body_contains: "Access Categories"
+
+    - node_id: "I.1.2.c"                 # "Reference Scheduler and admission control"
+      is_leaf: true
+      parent_id: "I.1.2"
+      body_contains: "Traffic Specifications"

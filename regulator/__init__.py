@@ -7,7 +7,7 @@ documents and reports gaps and suggested adjustments.
 from __future__ import annotations
 
 from regulator.applicability import (
-    get_applicable_atoms,
+    get_applicable_nodes,
     get_applicable_regulatory_procedures,
 )
 from regulator.coverage import get_batch_coverage
@@ -16,7 +16,7 @@ from regulator.parsing import parse_operating_procedure, parse_regulatory_docume
 from regulator.report import get_report
 
 __all__ = [
-    "get_applicable_atoms",
+    "get_applicable_nodes",
     "get_applicable_regulatory_procedures",
     "get_batch_coverage",
     "get_report",
