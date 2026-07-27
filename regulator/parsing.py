@@ -15,9 +15,12 @@ root node is prepended so the flat node list always forms a single tree.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from pathlib import Path
 from typing import Any
+
+import anthropic
 
 from regulator.llm import StructureLLM
 from regulator.models import (
@@ -160,18 +163,32 @@ def _is_numeric_id(node_id: str) -> bool:
     return all(seg.isdigit() for seg in node_id.split("."))
 
 
-def _locate_clause_start(text: str, label: str) -> int | None:
-    """Offset of ``label`` used as a clause START in ``text``, else ``None``.
+# A clause start is a dotted-numeric label (e.g. ``6.3.1``) that opens a clause
+# rather than appearing mid-sentence. It is: not preceded by a word char or dot
+# (so it is not the tail of a longer number); captured MAXIMALLY via the greedy
+# ``(?:\.\d+)*`` (so ``6.3`` is never captured inside ``6.3.1`` — the whole path
+# is consumed); not followed by a dot/digit; and followed by whitespace then a
+# letter (so cross-references like ``5.1.1 - 5.1.3`` and bare figures like
+# ``84 days`` are not mistaken for clause starts).
+#
+# Running this once with ``finditer`` and keeping the first occurrence of each
+# captured id is exactly equivalent to the old per-label ``re.search`` (same
+# lookarounds, same maximal-path capture, same first-match-wins) run for every
+# label — but O(len(text)) total instead of O(labels x len(text)).
+_CLAUSE_START_RE = re.compile(r"(?<![\w.])(\d+(?:\.\d+)*)(?![\d.])\s+[A-Za-z]")
 
-    A clause start is the label not preceded by a word char or dot (so it is not
-    the tail of a longer number), not followed by a dot/digit (so ``6.3`` does
-    not match inside ``6.3.1``), and followed by whitespace then a letter (so
-    cross-references like ``5.1.1 - 5.1.3`` and bare figures like ``84 days``
-    are not mistaken for clause starts).
+
+def _clause_start_offsets(text: str) -> dict[str, int]:
+    """Map every dotted-numeric clause-start label in ``text`` to its offset.
+
+    Single regex pass; the first occurrence of each label wins, matching a
+    per-label :func:`re.search`. See :data:`_CLAUSE_START_RE` for the exact
+    clause-start semantics.
     """
-    pattern = re.compile(r"(?<![\w.])" + re.escape(label) + r"(?![\d.])\s+[A-Za-z]")
-    match = pattern.search(text)
-    return match.start() if match else None
+    offsets: dict[str, int] = {}
+    for match in _CLAUSE_START_RE.finditer(text):
+        offsets.setdefault(match.group(1), match.start(1))
+    return offsets
 
 
 def _augment_numeric_gaps(
@@ -186,11 +203,15 @@ def _augment_numeric_gaps(
     (cross-references, figure numbers) are not introduced.
     """
     text = doc_text.text
+    # Precompute every clause-start offset ONCE so the probes below are O(1)
+    # dict lookups instead of full-text regex scans (the old per-label search
+    # made this routine quadratic on large, clause-dense documents).
+    candidates = _clause_start_offsets(text)
 
     def try_add(label: str) -> bool:
         if label in located:
             return False
-        offset = _locate_clause_start(text, label)
+        offset = candidates.get(label)
         if offset is None:
             return False
         located[label] = {
@@ -321,14 +342,36 @@ class _DocumentText:
 
 
 def _collect_proposals(
-    llm: StructureLLM, windows: list[list[PageRecord]]
+    llm: StructureLLM,
+    windows: list[list[PageRecord]],
+    warnings: list[str],
 ) -> list[dict[str, Any]]:
-    """Run the structure LLM over every page window; return raw node dicts."""
+    """Run the structure LLM over every page window; return raw node dicts.
+
+    A single window/pass that fails (malformed JSON surviving propose_json's
+    retry, or an Anthropic API error) must not abort the whole run — one bad
+    window out of hundreds would otherwise discard the entire spend. Each
+    failure is logged to ``warnings`` and skipped; the remaining windows and
+    passes still contribute their nodes.
+    """
     proposals: list[dict[str, Any]] = []
     for window in windows:
         text = _chunk_text(window)
-        for _ in range(STRUCTURE_PASSES):
-            result = llm.propose_json(_STRUCTURE_SYSTEM_PROMPT, text)
+        first_page, last_page = window[0].page_number, window[-1].page_number
+        for pass_index in range(STRUCTURE_PASSES):
+            try:
+                # Structure windows can be dense; the default 8000-token budget
+                # risks truncated JSON, so give them a larger ceiling. Profile
+                # calls keep their small explicit budget.
+                result = llm.propose_json(
+                    _STRUCTURE_SYSTEM_PROMPT, text, max_tokens=16000
+                )
+            except (json.JSONDecodeError, anthropic.AnthropicError) as exc:
+                warnings.append(
+                    f"window pages {first_page}-{last_page}: structure pass "
+                    f"{pass_index + 1} failed: {type(exc).__name__}; skipped"
+                )
+                continue
             for node in result.get("nodes", []):
                 if isinstance(node, dict) and node.get("node_id"):
                     proposals.append(node)
@@ -397,7 +440,7 @@ def parse_regulatory_document(
 
     llm = StructureLLM()
     windows = _chunk_windows(pages)
-    proposals = _collect_proposals(llm, windows)
+    proposals = _collect_proposals(llm, windows, warnings)
 
     doc_text = _DocumentText(pages)
 
