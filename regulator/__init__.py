@@ -9,6 +9,8 @@ from __future__ import annotations
 from regulator.applicability import (
     get_applicable_nodes,
     get_applicable_regulatory_procedures,
+    judge_document_applicability,
+    should_audit,
 )
 from regulator.coverage import get_batch_coverage
 from regulator.findings import promote_findings
@@ -20,7 +22,9 @@ __all__ = [
     "get_applicable_regulatory_procedures",
     "get_batch_coverage",
     "get_report",
+    "judge_document_applicability",
     "parse_operating_procedure",
     "parse_regulatory_document",
     "promote_findings",
+    "should_audit",
 ]

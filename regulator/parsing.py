@@ -33,7 +33,7 @@ from regulator.models import (
 )
 from regulator.parse_store import write_parsed_document
 from regulator.pdf_extract import PageRecord, extract_pages
-from regulator.sop_extract import extract_sop
+from regulator.sop_extract import ParagraphRecord, extract_sop
 
 # Where parsed documents are persisted as flat JSONL.
 PARSED_DIR = Path(__file__).resolve().parent.parent / "data" / "parsed"
@@ -47,6 +47,11 @@ CHUNK_OVERLAP = 2
 # under-enumerates dense, tightly-set clause text on any single pass; a second
 # independent pass reliably recovers clauses the first missed.
 STRUCTURE_PASSES = 2
+
+# Profile facets are unioned across passes for the same reason (see
+# _merge_profile_passes): a single pass drops a real facet item often enough to
+# matter, and which item it drops varies between runs.
+PROFILE_PASSES = 2
 
 _STRUCTURE_SYSTEM_PROMPT = """\
 You extract the STRUCTURE of a regulatory / standards document. You are given
@@ -112,20 +117,220 @@ Output ONLY the JSON object. No prose, no code fences.
 """
 
 _PROFILE_SYSTEM_PROMPT = """\
-You read the front matter / scope of a regulatory or standards document and
-return a compact structured profile as JSON, of this exact shape:
+You read excerpts of a regulatory / standards / reference document (front
+matter, table of contents, scope, and sampled sections) and return a compact
+structured profile as JSON. Judge the document by what it ACTUALLY IS, not by
+the subject it discusses — a teaching document about a standard is not the
+standard, and an agency directive about a rule is not the rule.
+
+IMPORTANT — profile ONE document. The excerpts are sampled from across a PDF and
+may contain adjacent, appended, or unrelated material (a neighbouring subpart,
+another standard, a bundled appendix). Identify the single document named in the
+front matter / title and profile only THAT document. Ignore any facet that
+belongs to neighbouring material rather than to this document's own scope.
+
+Return a single JSON object of this exact shape:
 {
   "title": "the document's title",
-  "framework": "issuing body / framework, e.g. 'OSHA 29 CFR', 'ASTM', 'IEEE'",
-  "edition": "edition or year, e.g. '2023' (empty string if unknown)",
-  "doc_kind": "one of: regulation | standard | permit",
-  "jurisdiction": ["federal", "state", or country names that apply"],
-  "activities": ["regulated activities"],
-  "substances": ["regulated substances / materials"],
-  "equipment": ["regulated equipment"],
-  "industries": ["industries governed"],
-  "addressee_types": ["who it binds: employer, facility, manufacturer, ..."]
+  "framework": "issuing body / framework, e.g. 'OSHA 29 CFR', 'API', 'NFPA'",
+  "edition": "edition or year, e.g. '2022' (empty string if unknown)",
+  "doc_kind": "one of the six kinds below",
+  "jurisdiction": ["where it applies, using the vocabulary below"],
+  "activities": ["regulated / described activities as verb-phrases"],
+  "substances": ["substances / materials in scope"],
+  "equipment": ["equipment / articles in scope"],
+  "industries": ["industries or sectors in scope"],
+  "addressee_types": ["who it binds or is written for"]
 }
+
+doc_kind — choose exactly one, by one-line criteria:
+- "regulation": the codified text of a binding law or rule issued by a
+  government body (a statute, a CFR part, a state regulation). This is the
+  enforceable rule itself, in regulatory language ("§", "shall", parts/subparts).
+- "compliance_directive": a government agency's OWN internal instruction,
+  directive, policy, or enforcement/inspection guidance about how to implement
+  or enforce a regulation — e.g. an enforcement directive / CPL / program
+  instruction addressed to the agency's officers or inspectors. It is ABOUT a
+  regulation; it is not the regulation's codified text. Watch for titles like
+  "Directive"/"Instruction"/"CPL", an issuing agency office, and markings such
+  as archived / superseded / dated guidance.
+- "industry_standard": a voluntary consensus standard published by a
+  standards-developing organization or trade body (ASME, API, ASTM, ANSI,
+  NFPA, IEEE, ISO, UL, ...). It becomes mandatory only when an authority or
+  contract adopts it.
+- "national_standard": a standard issued or adopted by a single nation's
+  standards body — typically that nation's adoption / transposition of an
+  international standard (e.g. a national body adopting an IEC or ISO standard).
+  Watch for a national standards-body identifier plus "adoption of IEC/ISO ...".
+- "reference_package": a compiled collection assembled for information or
+  reference rather than as an operative rule — e.g. a state implementation-plan
+  reference compilation, a bundle of statutes/plans gathered for context, or an
+  appendix explicitly provided "for reference purposes only" / "not to be
+  approved". It is not itself the operative binding instrument.
+- "non_regulatory": material that is neither a regulation nor a standard nor a
+  reference package — e.g. university/lecture notes, an educational overview or
+  introduction, a tutorial, slides, marketing, or descriptive commentary about
+  a topic. Watch for an academic author/affiliation, "Introduction to ...", and
+  the ABSENCE of any scope / applicability / requirements section.
+
+jurisdiction — use this vocabulary (a list; may hold more than one):
+- "US-federal" for a federal US law/rule;
+- "US-<STATE>" for a US state, e.g. "US-PA" for Pennsylvania;
+- "US" for something US-wide but not tied to a government level (a US industry
+  standard);
+- a country name ("Saudi Arabia") for a national document;
+- "adopted-by-AHJ" ONLY for a code/standard that becomes binding where an
+  authority having jurisdiction adopts it (fire/building/safety codes). A
+  general consensus standard with no such adoption mechanism is just "US"
+  (optionally also "international ..."); a federal rule is "US-federal", never
+  "adopted-by-AHJ". "adopted-by-AHJ" names an adoption MECHANISM, not a place,
+  so it never stands alone: always pair it with the country-level entry for the
+  body that published the standard ("US" for a US standards body);
+- descriptive phrases are fine when apt, e.g.
+  "industry-adopted (jurisdiction-dependent)" or "international (WTO TBT-aligned)";
+- use [] (empty) when the document is non-regulatory or states no jurisdiction;
+- a STATE (or other sub-national) document that implements, submits to, or is
+  approved under a federal programme still has only its own jurisdiction. Do not
+  add the federal level merely because the federal programme it answers to is
+  referenced throughout.
+
+Field guidance — aim for COMPLETENESS on what the document actually governs
+(omitting a governed concept is the worst error), while staying in scope:
+- activities: verb-phrases naming what the document governs or describes
+  ("in-service inspection of pressure vessels", "hot work permitting").
+  START with the primary purpose or use that the document exists to govern —
+  what the regulated articles are actually used to DO, or what outcome the rule
+  is written to control — before any administrative, recordkeeping, or testing
+  activity. Then list EVERY distinct requirement area, named program element,
+  or subprogram as its own phrase, reusing the document's own names for them;
+  never collapse several named elements into one umbrella phrase. Cross-check
+  this list against the equipment list: whenever the document sets a recurring
+  inspection, testing, or maintenance duty for an item in scope — including the
+  protective and relief devices attached to the main article — emit an activity
+  phrase naming that duty for that item. An activity list that covers only the
+  primary article is incomplete. If the document
+  enumerates its required elements (in a contents list, a paragraph-by-paragraph
+  structure, or a set of named subprograms), walk that enumeration and emit one
+  phrase per element — this list should be thorough rather than summarized. For a
+  document describing a government program, include the administration of the
+  program itself at its own level of government, and any formal delegation or
+  agreement with another level of government (e.g. agreements with counties or
+  local programs) as separate activities.
+- equipment: the machines, devices, and installed systems the requirements act
+  upon. Include BOTH the umbrella / family term AND its notable specific members
+  — a reader must be able to find the general class and the examples. Always
+  include the document's own CATCH-ALL scope category verbatim (the generic class
+  term it names alongside its specific examples, often "any other ..." or a
+  collective noun for the whole family), since that term carries the scope. Where
+  the document ENUMERATES the categories of equipment it covers (a definition of
+  covered equipment, or a list under an integrity/inspection requirement), emit
+  one entry per enumerated category, including the systems-level ones — and
+  prefer that enumeration over specific items picked out of illustrative appendix
+  or example lists. A requirement to compile "process safety information" (or an
+  equivalent design-information dossier) enumerates the equipment classes in
+  scope — vessels, piping, relief and vent systems, controls, ventilation — so
+  emit each such class. NEVER list a category the document EXEMPTS or excludes,
+  and never list example FACILITY types (tank farms, named plants, sector-specific
+  installations) as equipment — an enforcement or guidance document illustrates
+  its reach with example sites, and those examples are not its equipment scope.
+  Treat these as equipment too, and include each one the document names:
+  * its own generic term for the regulated UNIT or POINT at which the phenomenon
+    it controls occurs — a release / emission / discharge point, an affected or
+    emission unit, a covered source. These belong in equipment even though they
+    name a locus rather than a machine; a document that regulates emissions is
+    largely ABOUT such points, so omitting the term loses its core scope;
+  * TEMPORARY, MOBILE, and construction-phase objects it names as covered
+    ("apparatus of a permanent or temporary character", "equipment or materials
+    used therein") — not only finished permanent installations. Do not stop at
+    the abstract phrase: name the concrete erection and construction machinery
+    that class denotes on a real work site (cranes, derricks, rigs, hoists),
+    since those are what a reader must match against;
+  * when applicability turns on a physical THRESHOLD (a height, size, or
+    capacity), the general class of object that threshold selects, in the
+    document's own terms.
+  Exclude: apparatus used only to carry out a test or laboratory method. If the
+  regulated article is a MATERIAL or an item defined by the material it is made
+  of, it belongs in substances and equipment may be [].
+  CRITICAL exclusion — the PROTECTED side. Where the document regulates an
+  activity because it might endanger or interfere with something else, that
+  protected something is NOT equipment: not the facilities the rule shields, not
+  the natural features or terrain it measures against, and not the third-party
+  infrastructure whose safe operation is the rule's purpose. Equipment is ONLY
+  what the regulated party itself proposes to build, erect, install, or operate.
+  Ask of every candidate: "does the regulated party build or run this, or is it
+  the thing being protected FROM them?" — and drop it if it is the latter.
+- substances: the process / hazardous materials or material classes the
+  requirements govern, including the material class a specification-style
+  document defines, tests, or labels. Substances are what FLOWS THROUGH, is
+  PROCESSED BY, or is HANDLED BY the regulated equipment — never what that
+  equipment is MADE OF. So NEVER list materials of construction (steels, alloys,
+  stainless grades, plastics an article is fabricated from) even when the
+  document devotes whole sections to their corrosion, damage mechanisms, or
+  material selection. Also exclude incidental mentions, and exclude analytes,
+  residues, contaminants, impurity classes, or measured parameters that appear
+  only as quantities a test method reports or as pass/fail limits a product must
+  stay under — those are acceptance criteria, not substances in scope.
+- industries: the sectors the scope names or clearly implies, in the document's
+  own sector wording. Work through these four questions in turn and emit an entry
+  for every answer the document supports — the common failure is answering only
+  the first:
+  1. which sectors MAKE or produce the regulated article?
+  2. which sectors OPERATE or USE it in their own work?
+  3. which sectors SERVICE, MAINTAIN, or INSPECT it — and, if the article is
+     itself a tool for doing maintenance or service work, that service sector?
+  4. which named sub-sectors or SERVICE CATEGORIES does the scope spell out
+     ("... including X service, Y, and Z")? Emit each spelled-out one as its own
+     entry, in the document's own wording, rather than folding it into the
+     umbrella sector.
+  Also include the broad umbrella sector for the field the document belongs to.
+  Prefer the sectors named in the SCOPE over ones inferred from illustrative
+  appendix or example lists, and skip the long tail of niche examples such lists
+  contain. Never list a sector the document EXEMPTS, nor one that appears only as
+  a single worked example of an inspection or enforcement case.
+- addressee_types: every party the document assigns a ROLE or RESPONSIBILITY to,
+  named at the level of a PARTY TYPE rather than an individual office — usually
+  two to four entries. Work through the roles it names and include each one:
+  * the party that must comply (e.g. the employer, the owner-operator, the
+    facility, the manufacturer);
+  * the END USERS / owners / operators of the regulated article — include these
+    even when the document's requirements fall mainly on its maker;
+  * for a specification or labeling standard, the party making the claim or
+    applying the label — list this party as its OWN entry even when it is
+    usually the same organization as the manufacturer;
+  * any authority the document's own CLAUSES give an act to perform (an
+    authority having jurisdiction that approves, accepts, or grants exceptions).
+    Do NOT include an authority that appears only in adoption or reference
+    boilerplate — a foreword noting that administrative or regulatory bodies may
+    reference, adopt, or enforce the standard gives them no role in it;
+  * the issuing agency's OWN officers, but ONLY when the document is written TO
+    them (an internal directive or inspection guidance whose audience is those
+    officers). For a rule addressed to the public, do NOT list the agency, its
+    regional offices, or the officials who run its internal review and hearing
+    process — they administer the rule, they are not its addressee types;
+  * for a document about a government program, the government bodies that
+    administer it (the state agency, the county/local programs).
+  Do NOT infer stakeholders the document does not itself put under a duty — ask
+  of each candidate "does THIS document tell them to do something?" and drop it
+  if not. In particular EXCLUDE: other agencies or bodies the document merely
+  mentions, cross-references, or notes as running their own parallel programs;
+  enforcement or regulatory authorities it does not itself empower; laboratories
+  or other parties that merely perform a referenced test method; and bodies that
+  do nothing but receive reports or submittals. Above all, when a document sets
+  requirements a product must meet for some DOWNSTREAM ENVIRONMENT or process,
+  the operators of that downstream environment are NOT addressees — the document
+  describes their setting, it does not bind them, however central that setting is
+  to the document's subject. Nor are the product's eventual end users, nor the
+  laboratories that run its test methods, unless the document states a duty they
+  must discharge. For a product specification the answer is usually just the two
+  parties that make the product and make the claim about it.
+  Add the literal entry "procedure" when the document requires WRITTEN OPERATING
+  PROCEDURES for running the process as one of its own named required program
+  elements (look for a paragraph obliging the regulated party to develop and
+  maintain written operating procedures); for most standards this does NOT apply.
+- Use [] for a facet the document genuinely does not govern (e.g. a document
+  about radio protocols or aerial devices governs no substances; purely
+  educational material has no addressee).
+
 Use [] for lists you cannot determine and "" for unknown strings. Output ONLY
 the JSON object, no prose and no code fences.
 """
@@ -378,20 +583,211 @@ def _collect_proposals(
     return proposals
 
 
+# Valid doc_kind values (mirrors DocKind); used to validate the LLM's answer.
+_DOC_KINDS = (
+    "regulation",
+    "compliance_directive",
+    "industry_standard",
+    "national_standard",
+    "reference_package",
+    "non_regulatory",
+)
+
+# Generic (document-agnostic) phrases that tend to reveal what a document IS —
+# archival markings, reference/informational disclaimers, teaching material,
+# national adoption of a standard. Pages containing any of these are pulled into
+# the profile input so the classifier sees the smoking-gun page wherever it sits
+# (e.g. a "reference purposes only" appendix, an "Introduction to ..." cover).
+# These are classification SIGNALS, not answers for any specific document.
+# Deliberately narrow: broad words like "scope", "enforcement", or "directive"
+# match most pages of a regulatory PDF, which would pull in huge swaths of
+# unrelated neighbouring material and drown the real signal.
+_PROFILE_SIGNAL_PHRASES = (
+    "reference purposes",
+    "not to be approved",
+    "for informational purposes",
+    "informational only",
+    "lecture notes",
+    "introduction to",
+    "university",
+    "archived",
+    "superseded",
+    "adoption of",
+    "implementation plan",
+)
+
+# Keep the profile call's input well under Sonnet's context while giving it far
+# more than the old two-page front-matter slice. ~70k chars ≈ 18k tokens; across
+# 11 documents that stays comfortably under the ~300k-token/iteration ceiling.
+#
+# Bigger is NOT better here: widening this to 90k measurably hurt precision,
+# pulling in enough incidental late-document material (processing media, test
+# limits, neighbouring programs) that the classifier started reporting it as
+# in-scope. The cap is a relevance filter, not just a cost control.
+_PROFILE_INPUT_CHAR_CAP = 70000
+# Enough front pages to clear a cover, a revision/foreword page, and a
+# multi-page table of contents before the scope/applicability section — which is
+# where the facets we profile are actually defined. Eight pages stopped just
+# short of it on standards with a long front matter.
+_PROFILE_FRONT_PAGES = 12
+_PROFILE_BACK_PAGES = 3
+_PROFILE_SAMPLE_COUNT = 5
+
+
+def _page_budgets(lengths: list[int], cap: int) -> list[int]:
+    """Split ``cap`` characters across pages of the given lengths, fairly.
+
+    Each still-unsatisfied page is offered an equal share of what is left; pages
+    shorter than their share take only what they need and donate the remainder
+    to the pages still over budget, repeating until the budget is exhausted.
+
+    This matters because a flat ``cap // n`` slice truncates long pages even
+    when the selected text would have fit under the cap in full, silently
+    dropping real text while short pages waste their unused share.
+    """
+    budgets = [0] * len(lengths)
+    pending = list(range(len(lengths)))
+    remaining = cap
+    while pending:
+        share = remaining // len(pending)
+        if share == 0:
+            break
+        satisfied = [i for i in pending if lengths[i] <= share]
+        if not satisfied:
+            # Every remaining page is longer than its share: split evenly.
+            for index in pending:
+                budgets[index] = share
+            break
+        for index in satisfied:
+            budgets[index] = lengths[index]
+            remaining -= lengths[index]
+        pending = [i for i in pending if lengths[i] > share]
+    return budgets
+
+
+def _profile_input_text(pages: list[PageRecord]) -> str:
+    """Select the text the profile classifier sees.
+
+    Front matter alone is often insufficient to tell what a document IS (a
+    "reference purposes only" note can live in an appendix; a document's true
+    nature as lecture notes shows on the cover). We include the front pages, the
+    last few pages, evenly-spaced samples, and any page containing a generic
+    classification-signal phrase — then cap the total size.
+    """
+    if not pages:
+        return ""
+    total = len(pages)
+    chosen: set[int] = set(range(min(_PROFILE_FRONT_PAGES, total)))
+    chosen.update(range(max(0, total - _PROFILE_BACK_PAGES), total))
+    if total > _PROFILE_FRONT_PAGES + _PROFILE_BACK_PAGES:
+        step = max(1, total // (_PROFILE_SAMPLE_COUNT + 1))
+        chosen.update(range(step, total, step))
+    for index, page in enumerate(pages):
+        lowered = page.text.lower()
+        if any(phrase in lowered for phrase in _PROFILE_SIGNAL_PHRASES):
+            chosen.add(index)
+
+    selected = [pages[i] for i in sorted(chosen) if pages[i].text.strip()]
+    # Budget the cap ACROSS the selected pages rather than truncating the joined
+    # text: a hard prefix cut would spend the whole budget on the front pages and
+    # silently drop the sampled later pages, which is exactly where a document's
+    # requirement areas and catch-all scope terms tend to live.
+    budgets = _page_budgets(
+        [len(page.text) for page in selected], _PROFILE_INPUT_CHAR_CAP
+    )
+    parts = [
+        f"[PAGE {page.page_number}]\n{page.text[:budget]}"
+        for page, budget in zip(selected, budgets)
+    ]
+    return "\n".join(parts)
+
+
+# Facets of the profile that are lists, and so can be unioned across passes.
+_PROFILE_LIST_FIELDS = (
+    "jurisdiction",
+    "activities",
+    "substances",
+    "equipment",
+    "industries",
+    "addressee_types",
+)
+
+
+def _merge_profile_passes(passes: list[dict[str, Any]]) -> dict[str, Any]:
+    """Union the list facets of several profile passes into one profile dict.
+
+    Scalar facets (title, framework, edition, doc_kind) come from the first
+    pass — they are single judgements, and averaging them is meaningless. The
+    list facets are UNIONED in first-seen order, deduplicated case-insensitively.
+
+    Rationale mirrors ``STRUCTURE_PASSES``: on any single pass the model
+    under-enumerates a facet, dropping one or two real items more or less at
+    random, and which items it drops varies run to run. Recall is what matters
+    for a profile (a missed concept makes a document look inapplicable), and a
+    second independent pass recovers most of what the first missed. Extra items
+    are cheap by comparison, so the union is the right trade.
+    """
+    merged = dict(passes[0])
+    for field in _PROFILE_LIST_FIELDS:
+        seen: dict[str, str] = {}
+        for data in passes:
+            for value in data.get(field, []) or []:
+                text = str(value).strip()
+                key = " ".join(text.lower().split())
+                if key and key not in seen:
+                    seen[key] = text
+        merged[field] = list(seen.values())
+    return merged
+
+
+def _run_profile_passes(
+    llm: StructureLLM, system_prompt: str, text: str
+) -> dict[str, Any]:
+    """Run the profile call ``PROFILE_PASSES`` times and merge the results.
+
+    A pass that raises is skipped so one bad call cannot sink the rest; if every
+    pass fails the error propagates to the caller's best-effort fallback.
+    """
+    passes: list[dict[str, Any]] = []
+    for _ in range(PROFILE_PASSES):
+        try:
+            passes.append(
+                llm.propose_json(
+                    system_prompt,
+                    text,
+                    max_tokens=4000,
+                    thinking={"type": "disabled"},
+                )
+            )
+        except Exception:  # noqa: BLE001,S112 — a failed pass is simply skipped
+            continue
+    if not passes:
+        raise ValueError("every profile pass failed")
+    return _merge_profile_passes(passes)
+
+
 def _build_profile(
     llm: StructureLLM, pages: list[PageRecord], doc_id: str
 ) -> tuple[RegProfile, str, str, str]:
-    """Derive a RegProfile plus (title, framework, edition) from front matter."""
-    front = _chunk_text(pages[:2])
+    """Derive a RegProfile plus (title, framework, edition) from the document.
+
+    The classifier sees a widened slice of the document (see
+    :func:`_profile_input_text`) rather than only the first two pages, and
+    thinking is disabled so the whole token budget is spent on the JSON answer.
+    The call is repeated ``PROFILE_PASSES`` times and the list facets are
+    unioned (see :func:`_merge_profile_passes`); a pass that fails is skipped,
+    so the profile still lands as long as one pass succeeds.
+    """
+    sample = _profile_input_text(pages)
     title, framework, edition = doc_id, "", ""
     try:
-        data = llm.propose_json(_PROFILE_SYSTEM_PROMPT, front, max_tokens=1500)
+        data = _run_profile_passes(llm, _PROFILE_SYSTEM_PROMPT, sample)
         title = str(data.get("title") or doc_id)
         framework = str(data.get("framework") or "")
         edition = str(data.get("edition") or "")
         doc_kind = data.get("doc_kind")
-        if doc_kind not in ("regulation", "standard", "permit"):
-            doc_kind = "standard"
+        if doc_kind not in _DOC_KINDS:
+            doc_kind = "regulation"
         profile = RegProfile(
             doc_id=doc_id,
             jurisdiction=[str(x) for x in data.get("jurisdiction", [])],
@@ -406,7 +802,7 @@ def _build_profile(
         profile = RegProfile(
             doc_id=doc_id,
             jurisdiction=[],
-            doc_kind="standard",
+            doc_kind="regulation",
             activities=[],
             substances=[],
             equipment=[],
@@ -591,54 +987,129 @@ _SOP_STYLE_LEVELS = {
     "CNXL5": 4,
 }
 
-# Deterministic internal-reference patterns. Kept deliberately simple and
-# readable; near-misses are acceptable since references are not part of the
-# node tree the truth case checks.
-_SOP_REFERENCE_PATTERNS = (
-    re.compile(r"MJV-CGP-[0-9A-Za-z]+"),
-    re.compile(r"MS-SWP-\d+"),
-    re.compile(r"P&ID"),
-    re.compile(r"SPCC Plan"),
-    re.compile(r"Cause & Effect Matrix"),
-    re.compile(r"Vendor Manuals"),
+# Deterministic internal-reference extraction, scoped to the SOP's "References"
+# section. The truth set expands the section's compressed doc-number list into
+# full canonical ids (e.g. "MJV-CGP-10-0297, 0298, ..." -> "MJV-CGP-10-0297",
+# "MJV-CGP-10-0298", ...) and keeps the fuller named forms ("CNX SPCC Plan",
+# "Majorsville Cause & Effect Matrix"). References mentioned OUTSIDE that section
+# (e.g. a P&ID note, a mole-sieve procedure in a step) are deliberately not
+# collected, so scoping to the section is what keeps the set exact.
+
+# A leading canonical doc id like "MJV-CGP-10-0297" — group 1 is the reusable
+# prefix ("MJV-CGP-10-") that the rest of the comma list inherits.
+_MJV_PREFIX_RE = re.compile(r"^(MJV-CGP-\d+-)")
+# A single doc token in the list: digits with an optional trailing letter
+# (0297, 0301B, 314A, ...).
+_MJV_TOKEN_RE = re.compile(r"\b(\d+[A-Za-z]?)\b")
+_MS_SWP_RE = re.compile(r"\bMS-SWP-\d+\b")
+# Named references, captured with their qualifier (the leading word) so the
+# canonical fuller form is produced.
+_NAMED_REFERENCE_RES = (
+    re.compile(r"\b\w+ Cause & Effect Matrix\b"),
+    re.compile(r"\bVendor Manuals\b"),
+    re.compile(r"\b\w+ SPCC Plan\b"),
 )
 
 _SOP_PROFILE_SYSTEM_PROMPT = """\
 You read the text of a Standard Operating Procedure (SOP) for an industrial
 facility and return a compact structured profile as JSON, of this exact shape:
 {
-  "jurisdiction": ["state or country whose rules apply, e.g. 'Pennsylvania'"],
+  "jurisdiction": ["where the facility operates, using the vocabulary below"],
   "industry": "the single industry this SOP belongs to, e.g. 'midstream
                 natural gas processing' ('' if unknown)",
-  "activities": ["operational activities the SOP covers"],
+  "activities": ["operational activities the SOP covers, as verb-phrases"],
   "substances": ["substances / materials handled"],
-  "equipment": ["notable equipment / vessels / valves involved"]
+  "equipment": ["notable equipment / vessels / valves / systems involved"]
 }
+
+jurisdiction vocabulary (a list; include every level that applies): "US" for
+the country, "US-<STATE>" for a US state (e.g. "US-PA" for Pennsylvania). If the
+SOP indicates it operates in a US state, include BOTH the country ("US") and the
+state ("US-<STATE>"). Use a country name for a non-US facility.
+
+Field guidance:
+- activities: verb-phrases naming the MAJOR operations the SOP covers (e.g.
+  "blowdown", "valve line-up", "purging with natural gas or nitrogen"). Include
+  control-system / SCADA-based operation, venting and draining operations, any
+  permitted work (such as hot work) the SOP governs, any safety assessment the
+  SOP requires before work (risk assessment / job safety analysis), and any
+  start-up / shutdown procedures it performs or references — naming the referenced
+  procedure id when the SOP cites one. Name the major operations, not every
+  individual step or variant of one operation.
+- equipment: concrete items with their tags where given, grouped into families.
+  Cover the whole process — including safety / relief valves, inlet separation
+  and collection vessels, local analogue gauges and sight/level glasses, and the
+  control (SCADA) system itself — not only the main process vessels.
+- substances: the process materials actually handled, including utility and fuel
+  streams. Exclude ambient air constituents that are merely monitored for.
 Use [] for lists you cannot determine and "" for unknown strings. Output ONLY
 the JSON object, no prose and no code fences.
 """
 
 
-def _extract_internal_references(text: str) -> list[str]:
-    """Collect distinct internal references from ``text`` in first-seen order."""
+def _references_section(paragraphs: list[ParagraphRecord]) -> list[ParagraphRecord]:
+    """Return the paragraphs under the SOP's ``References`` heading.
+
+    The section begins after the top-level (``CNXL1``) heading whose text is
+    "References" and ends at the next ``CNXL1`` heading. Returns ``[]`` when no
+    such heading exists.
+    """
+    section: list[ParagraphRecord] = []
+    collecting = False
+    for record in paragraphs:
+        if record.style == "CNXL1":
+            if collecting:
+                break  # next top-level heading closes the References section
+            if record.text.strip().rstrip(".").lower() == "references":
+                collecting = True
+            continue
+        if collecting:
+            section.append(record)
+    return section
+
+
+def _extract_internal_references(paragraphs: list[ParagraphRecord]) -> list[str]:
+    """Collect distinct internal references from the SOP's References section.
+
+    Deterministic (no LLM). The compressed doc-number list is expanded to full
+    canonical ids by inheriting the prefix of its leading id; ``MS-SWP`` ids and
+    named references (SPCC plan, cause & effect matrix, vendor manuals) are taken
+    verbatim. First-seen order is preserved.
+    """
     seen: dict[str, None] = {}
-    for pattern in _SOP_REFERENCE_PATTERNS:
-        for match in pattern.finditer(text):
-            seen.setdefault(match.group(0), None)
+    for record in _references_section(paragraphs):
+        text = record.text
+        stripped = text.strip()
+        prefix_match = _MJV_PREFIX_RE.match(stripped)
+        if prefix_match:
+            prefix = prefix_match.group(1)  # e.g. "MJV-CGP-10-"
+            # Strip every full prefix, then re-attach it to each bare token so
+            # "MJV-CGP-10-0297, 0298, 314A" -> the three full ids.
+            body = stripped.replace(prefix, " ")
+            for token in _MJV_TOKEN_RE.findall(body):
+                seen.setdefault(prefix + token, None)
+        for match in _MS_SWP_RE.findall(text):
+            seen.setdefault(match, None)
+        for pattern in _NAMED_REFERENCE_RES:
+            for match in pattern.finditer(text):
+                seen.setdefault(match.group(0), None)
     return list(seen)
 
 
 def _build_sop_profile(
     llm: StructureLLM, full_text: str, internal_references: list[str]
 ) -> SopProfile:
-    """Derive a :class:`SopProfile` from the SOP text via one Haiku call.
+    """Derive a :class:`SopProfile` from the SOP text.
 
     ``internal_references`` are computed deterministically upstream and passed
-    through unchanged; the LLM only fills the descriptive facets. Profiling is
-    best-effort — any failure yields an empty-but-valid profile.
+    through unchanged; the LLM only fills the descriptive facets. As for
+    regulatory profiles, the call is repeated ``PROFILE_PASSES`` times and the
+    list facets are unioned so one pass's omission does not lose an operation or
+    a piece of equipment. Profiling is best-effort — any failure yields an
+    empty-but-valid profile.
     """
     try:
-        data = llm.propose_json(_SOP_PROFILE_SYSTEM_PROMPT, full_text, max_tokens=1500)
+        data = _run_profile_passes(llm, _SOP_PROFILE_SYSTEM_PROMPT, full_text)
         return SopProfile(
             jurisdiction=[str(x) for x in data.get("jurisdiction", [])],
             industry=str(data.get("industry") or ""),
@@ -749,7 +1220,7 @@ def parse_operating_procedure(
         )
 
     full_text = "\n".join(record.text for record in extraction.paragraphs)
-    internal_references = _extract_internal_references(full_text)
+    internal_references = _extract_internal_references(extraction.paragraphs)
     profile = _build_sop_profile(StructureLLM(), full_text, internal_references)
 
     pages_total = (

@@ -1,0 +1,201 @@
+{
+  "_meta": {
+    "generated_from": "getinterface/take-home-task regulation_task/data",
+    "note": "doc_kind values used here: regulation | compliance_directive | industry_standard | national_standard | reference_package | non_regulatory. Align these with your DocKind enum (or adopt them).",
+    "date": "2026-07-27"
+  },
+  "sop_profile": {
+    "jurisdiction": ["US", "US-PA"],
+    "industry": "midstream natural gas processing",
+    "activities": [
+      "initial purge of condensate skid",
+      "purging with natural gas or nitrogen",
+      "valve line-up",
+      "blowdown",
+      "hot work (permitted)",
+      "venting via high point vents / low point drains",
+      "SCADA-based valve and setpoint operation",
+      "risk assessment / JSA",
+      "pump start-up and shutdown (per MS-SWP-0222/0223)"
+    ],
+    "substances": ["natural gas", "nitrogen", "hydrocarbon condensate", "fuel gas"],
+    "equipment": [
+      "pressure vessels (V-720, V-730, V-740, V-745, V-750, V-780, V-785)",
+      "pressure safety valves (PSVs)",
+      "heat exchangers (E-735, E-742, E-751, HE-735, HE-750-140, AC-746)",
+      "heaters (HTR-750, H-080)",
+      "pumps (P-782, P-783, P-787, P-788)",
+      "control valves (PCV, FCV, LCV, TCV, SDV, XV series)",
+      "slug catcher",
+      "vapor recovery units (VRU-785 A/B)",
+      "filters (F-715 A/B)",
+      "analogue gauges and site glasses",
+      "SCADA system"
+    ],
+    "internal_references": [
+      "MJV-CGP-10-0297", "MJV-CGP-10-0298", "MJV-CGP-10-0300", "MJV-CGP-10-0301",
+      "MJV-CGP-10-0301B", "MJV-CGP-10-0301C", "MJV-CGP-10-0301D",
+      "MJV-CGP-10-0302A", "MJV-CGP-10-0302B", "MJV-CGP-10-0302C",
+      "MJV-CGP-10-0303", "MJV-CGP-10-0304", "MJV-CGP-10-0305A", "MJV-CGP-10-0306",
+      "MJV-CGP-10-314A", "MJV-CGP-10-315", "MJV-CGP-10-316", "MJV-CGP-10-317",
+      "Majorsville Cause & Effect Matrix",
+      "Vendor Manuals",
+      "CNX SPCC Plan",
+      "MS-SWP-0222", "MS-SWP-0223"
+    ]
+  },
+  "reg_profiles": [
+    {
+      "doc_id": "reg-29-cfr-1910-119",
+      "jurisdiction": ["US-federal"],
+      "doc_kind": "compliance_directive",
+      "activities": [
+        "process safety management program implementation",
+        "compliance auditing and enforcement (CSHO guidance)",
+        "operating procedure management",
+        "mechanical integrity",
+        "hot work permitting",
+        "pre-startup safety review",
+        "management of change"
+      ],
+      "substances": ["highly hazardous chemicals", "flammable liquids", "flammable gases", "toxics"],
+      "equipment": ["process equipment", "pressure vessels", "piping systems", "relief and vent systems", "controls"],
+      "industries": ["chemical processing", "petroleum refining", "oil and gas processing", "general industry"],
+      "addressee_types": ["employer", "OSHA compliance officers", "procedure"],
+      "_notes": "ARCHIVED OSHA directive CPL 2-2.45A (1994) about the PSM standard, not the CFR text itself; PSM coverage triggers on threshold quantities (10,000 lb flammables)"
+    },
+    {
+      "doc_id": "reg-40-cfr-part-63-subpart-hh",
+      "jurisdiction": ["US-federal"],
+      "doc_kind": "regulation",
+      "activities": [
+        "hazardous air pollutant emission control",
+        "glycol dehydration",
+        "storage and transfer of natural gas / condensate",
+        "emission point monitoring and reporting"
+      ],
+      "substances": ["hazardous air pollutants (HAP)", "benzene/BTEX", "natural gas", "hydrocarbon liquids/condensate"],
+      "equipment": ["glycol dehydration units", "storage vessels", "emission points", "ancillary equipment", "control devices"],
+      "industries": ["oil and natural gas production"],
+      "addressee_types": ["facility owners and operators"],
+      "_notes": "Applicability gated on 'oil and natural gas production facility' status AND major/area HAP source status (§63.760)"
+    },
+    {
+      "doc_id": "reg-api-510-2022",
+      "jurisdiction": ["US", "industry-adopted (jurisdiction-dependent)"],
+      "doc_kind": "industry_standard",
+      "activities": [
+        "in-service inspection of pressure vessels",
+        "repair, alteration, rerating (MAOP) of vessels",
+        "pressure-relieving device inspection",
+        "condition monitoring"
+      ],
+      "substances": ["hydrocarbons", "chemical process fluids", "natural gas", "brine"],
+      "equipment": ["pressure vessels", "pressure-relieving devices (PRDs/PSVs)"],
+      "industries": ["refining", "petrochemical", "exploration and production", "gathering and lease processing"],
+      "addressee_types": ["owner-operators", "inspectors", "repair organizations"],
+      "_notes": "Explicitly covers E&P service vessels incl. gathering/transporting/processing natural gas (§1.2.1)"
+    },
+    {
+      "doc_id": "reg-nfpa-86",
+      "jurisdiction": ["US", "adopted-by-AHJ"],
+      "doc_kind": "industry_standard",
+      "activities": [
+        "operation of ovens, dryers, furnaces",
+        "combustion system safety management",
+        "burner management",
+        "fuel gas / fuel oil firing",
+        "ventilation safety"
+      ],
+      "substances": ["fuel gas", "fuel oil", "oxygen-enriched air", "special atmospheres"],
+      "equipment": ["Class A/B/C/D ovens", "dryers", "furnaces", "thermal oxidizers", "heated enclosures", "burners", "safety shutoff valves", "flame supervision devices"],
+      "industries": ["commercial and industrial materials processing"],
+      "addressee_types": ["facility", "equipment operators", "manufacturers", "AHJ"],
+      "_notes": "Scope: 'any other heated enclosure used for processing of materials' — whether SOP heaters (HTR-750, H-080) qualify is the open fact"
+    },
+    {
+      "doc_id": "reg-pa-dep-air-quality",
+      "jurisdiction": ["US-PA"],
+      "doc_kind": "reference_package",
+      "activities": [
+        "state air pollution control program administration",
+        "SIP (State Implementation Plan) documentation",
+        "county air program agreements",
+        "ambient monitoring network review"
+      ],
+      "substances": ["air pollutants"],
+      "equipment": ["emission sources", "ambient monitoring network"],
+      "industries": ["all Pennsylvania emission sources"],
+      "addressee_types": ["state agency", "county programs", "facility (indirect)"],
+      "_notes": "Appendix A explicitly 'Provided for Reference Purposes Only — Not to be Approved Into the SIP'; contains PA Air Pollution Control Act of 1959 among others"
+    },
+    {
+      "doc_id": "reg-14-cfr-part-77",
+      "jurisdiction": ["US-federal"],
+      "doc_kind": "regulation",
+      "activities": [
+        "notice to FAA of proposed construction or alteration of structures",
+        "obstruction evaluation / aeronautical studies",
+        "antenna farm area establishment"
+      ],
+      "substances": [],
+      "equipment": ["antenna towers", "tall structures", "construction cranes"],
+      "industries": ["construction", "broadcasting", "aviation"],
+      "addressee_types": ["persons/sponsors proposing construction or alteration"],
+      "_notes": "Triggers on proposed construction/alteration affecting navigable airspace — an activity type, not a facility type"
+    },
+    {
+      "doc_id": "reg-ansi-a92-2",
+      "jurisdiction": ["US"],
+      "doc_kind": "industry_standard",
+      "activities": [
+        "elevating personnel with vehicle-mounted aerial devices",
+        "aerial device design, rating, testing, inspection"
+      ],
+      "substances": [],
+      "equipment": ["extensible boom platforms", "aerial ladders", "articulating boom platforms", "vertical towers", "vehicle-mounted aerial devices"],
+      "industries": ["utilities", "construction", "maintenance services"],
+      "addressee_types": ["manufacturers", "dealers", "users/owners"],
+      "_notes": "Excludes firefighting equipment and the vehicles themselves (§1.1.2)"
+    },
+    {
+      "doc_id": "reg-astm-d6400",
+      "jurisdiction": ["US", "international (WTO TBT-aligned)"],
+      "doc_kind": "industry_standard",
+      "activities": [
+        "labeling of compostable plastics",
+        "aerobic composting qualification testing"
+      ],
+      "substances": ["plastics", "polymers", "compostable packaging materials"],
+      "equipment": [],
+      "industries": ["plastics manufacturing", "packaging", "municipal/industrial composting"],
+      "addressee_types": ["manufacturers", "product labelers"],
+      "_notes": ""
+    },
+    {
+      "doc_id": "reg-ieee-802-11",
+      "jurisdiction": [],
+      "doc_kind": "non_regulatory",
+      "activities": ["wireless LAN quality-of-service (educational overview)"],
+      "substances": [],
+      "equipment": ["wireless LAN hardware (descriptive only)"],
+      "industries": ["computer networking"],
+      "addressee_types": [],
+      "_notes": "University lecture notes ('Introduction to IEEE 802.11 standards', Z. Mammeri, UPS) — not the IEEE standard and not a regulatory document; no scope/applicability section exists"
+    },
+    {
+      "doc_id": "reg-saso-iec-60051-1-2020",
+      "jurisdiction": ["Saudi Arabia"],
+      "doc_kind": "national_standard",
+      "activities": [
+        "specification of analogue electrical measuring instruments",
+        "instrument accuracy and testing requirements"
+      ],
+      "substances": [],
+      "equipment": ["ammeters", "voltmeters", "wattmeters", "frequency meters", "ohmmeters", "shunts", "series resistors", "multi-function analogue instruments"],
+      "addressee_types": ["manufacturers", "instrument users"],
+      "industries": ["electrical equipment manufacturing", "instrumentation"],
+      "_notes": "Saudi national adoption of IEC 60051-1; excludes special-purpose instruments covered by their own IEC standards"
+    }
+  ]
+}
