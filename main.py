@@ -41,9 +41,13 @@ def main() -> None:
     sop = parse_operating_procedure(SOP_PATH)
     print(f"Parsed SOP '{sop.title}' ({len(sop.nodes)} nodes)")
 
-    # Stage 3: narrow to the applicable regulatory documents.
+    # Stage 3: narrow to the regulatory documents worth auditing (one
+    # applicability call per document; "not_applicable" documents are dropped).
     applicable = get_applicable_regulatory_procedures(sop, regulatory_docs)
-    print(f"Selected {len(applicable)} applicable regulatory documents (stub)")
+    print(
+        f"Selected {len(applicable)} of {len(regulatory_docs)} regulatory "
+        f"documents for audit"
+    )
 
     # Stage 4: check SOP coverage against applicable requirements.
     coverage = get_batch_coverage(sop, applicable)

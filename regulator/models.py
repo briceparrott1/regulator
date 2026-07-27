@@ -12,11 +12,48 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# Constrained-string aliases used across the schema.
-DocKind = Literal["regulation", "standard", "permit"]
+# Constrained-string aliases used across the schema. The doc_kind taxonomy
+# mirrors the captain's truth set:
+#   regulation           — the codified text of a binding law/rule (statute,
+#                          CFR part, state regulation)
+#   compliance_directive — an agency's enforcement/compliance instruction or
+#                          guidance about a regulation (e.g. an archived OSHA
+#                          CPL directive), NOT the regulation's own text
+#   industry_standard    — a voluntary consensus standard from an SDO/trade body
+#                          (ASME, API, ASTM, ANSI, NFPA, IEEE, ISO, ...)
+#   national_standard    — a single nation's adoption/transposition of an
+#                          international standard (e.g. SASO adopting IEC)
+#   reference_package    — a compiled reference/informational collection, not an
+#                          operative rule (e.g. a state SIP reference package)
+#   non_regulatory       — neither regulation nor standard (lecture notes,
+#                          tutorials, descriptive commentary)
+DocKind = Literal[
+    "regulation",
+    "compliance_directive",
+    "industry_standard",
+    "national_standard",
+    "reference_package",
+    "non_regulatory",
+]
 CoverageStatus = Literal["covered", "partial", "absent", "contradicted"]
 FindingType = Literal["gap", "partial", "contradiction"]
 ValidationStatus = Literal["passed", "quarantined"]
+
+# Document-level applicability vocabulary. The three verdicts are DESCRIPTIVE —
+# they record what the document's own scope says about the SOP, not what the
+# pipeline should do about it (that decision is
+# :func:`regulator.applicability.should_audit`):
+#   applicable     — the scope covers the SOP on facts the SOP itself states
+#   not_applicable — a scope gate fails on facts already known (wrong activity,
+#                    wrong jurisdiction, wrong article), or the document states
+#                    no scope at all
+#   conditional    — the subject matter matches, but applicability turns on one
+#                    or more facts the SOP does not state (a threshold quantity,
+#                    a source classification, an equipment type, an adoption).
+#                    Those unknowns are listed in ``missing_facts``.
+Verdict = Literal["applicable", "not_applicable", "conditional"]
+# How sure the reader is of the verdict, on the evidence it was given.
+Confidence = Literal["high", "medium", "low"]
 
 
 # ── Parse layer (immutable) ─────────────────────────────
@@ -26,7 +63,13 @@ class RegProfile(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     doc_id: str  # slug of the source document this profile describes
-    jurisdiction: list[str]  # federal / state / country
+    # Where the document applies, using the truth vocabulary: "US-federal",
+    # a US state as "US-<STATE>" (e.g. "US-PA"), country-wide "US", other
+    # country names ("Saudi Arabia"), "adopted-by-AHJ" for standards binding
+    # only where an authority adopts them, phrases like
+    # "industry-adopted (jurisdiction-dependent)" or
+    # "international (WTO TBT-aligned)", and empty when non-regulatory.
+    jurisdiction: list[str]
     doc_kind: DocKind
     activities: list[str]
     substances: list[str]
@@ -80,6 +123,7 @@ class SopProfile(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    # Same jurisdiction vocabulary as RegProfile (e.g. "US", "US-PA").
     jurisdiction: list[str]
     industry: str
     activities: list[str]
@@ -126,12 +170,31 @@ class OperatingProcedure(BaseModel):
 
 # ── Verdict layer (per-run, references IDs only) ───────
 class DocApplicabilityVerdict(BaseModel):
-    """Whether a regulatory document applies to the run's SOP."""
+    """What one regulatory document's scope says about the run's SOP.
+
+    Deliberately DESCRIPTIVE, not decisive: it records an observation (the
+    scope sentence that drives the call, why it lands where it does, and which
+    facts are still unknown) without saying whether the pipeline should keep
+    auditing the document. That call is made by
+    :func:`regulator.applicability.should_audit`, so the policy can change
+    without the record changing meaning.
+    """
+
+    model_config = ConfigDict(frozen=True)
 
     doc_id: str
-    applicable: bool
+    sop_id: str
+    verdict: Verdict
+    # The scope/applicability sentence driving the verdict, copied VERBATIM from
+    # the source document so a reviewer can find it. ``None`` when the document
+    # states no scope to quote (e.g. non-regulatory material).
+    trigger_quote: str | None = None
     reasons: list[str] = Field(default_factory=list)
-    confidence: float
+    # Facts the SOP does not state that GATE applicability (threshold
+    # quantities, source classifications, equipment types). Populated mainly on
+    # a "conditional" verdict; empty when the verdict rests on known facts.
+    missing_facts: list[str] = Field(default_factory=list)
+    confidence: Confidence
 
 
 class NodeApplicabilityVerdict(BaseModel):

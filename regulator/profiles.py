@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import sys
 from pathlib import Path
 
@@ -42,7 +43,7 @@ from pathlib import Path
 from regulator.llm import StructureLLM
 from regulator.models import OperatingProcedure, RegulatoryDocument
 from regulator.parse_cli import _available_regulations, resolve_regulation_flag
-from regulator.parse_store import write_parsed_document
+from regulator.parse_store import read_parsed_document, write_parsed_document
 from regulator.parsing import (
     _build_profile,
     _build_sop_profile,
@@ -51,6 +52,18 @@ from regulator.parsing import (
 )
 from regulator.pdf_extract import extract_pages
 from regulator.sop_extract import extract_sop
+
+# Model used for the semantic profile calls. Distinct from PARSE_MODEL
+# (claude-haiku-4-5, used for the deterministic structure passes): document
+# classification and facet extraction are semantic judgement calls that a
+# stronger model does markedly better, so they default to Sonnet.
+PROFILE_MODEL_DEFAULT = "claude-sonnet-5"
+
+
+def _profile_llm() -> StructureLLM:
+    """LLM used for profile extraction, selected by the PROFILE_MODEL env var."""
+    return StructureLLM(model=os.environ.get("PROFILE_MODEL", PROFILE_MODEL_DEFAULT))
+
 
 # Where profile-only artifacts are persisted. This is the directory
 # applicability / document-level matching iterates on.
@@ -76,7 +89,7 @@ def extract_regulatory_profile(path: Path) -> RegulatoryDocument:
     doc_id = _slug(path.stem)
 
     pages = extract_pages(path)
-    llm = StructureLLM()
+    llm = _profile_llm()
     profile, title, framework, edition = _build_profile(llm, pages, doc_id)
 
     parse_accounting = {
@@ -114,8 +127,8 @@ def extract_sop_profile(path: Path = SOP_PATH) -> OperatingProcedure:
 
     extraction = extract_sop(path)
     full_text = "\n".join(record.text for record in extraction.paragraphs)
-    internal_references = _extract_internal_references(full_text)
-    profile = _build_sop_profile(StructureLLM(), full_text, internal_references)
+    internal_references = _extract_internal_references(extraction.paragraphs)
+    profile = _build_sop_profile(_profile_llm(), full_text, internal_references)
 
     pages_total = (
         extraction.pages_total
@@ -151,6 +164,29 @@ def write_profile(
     header/profile records are written — the shape applicability loading expects.
     """
     return write_parsed_document(doc, out_dir)
+
+
+def load_profile(
+    doc_id: str, profiles_dir: Path = PROFILES_DIR
+) -> RegulatoryDocument | OperatingProcedure:
+    """Load one profile-only artifact by its ``doc_id``.
+
+    The inverse of :func:`write_profile`: reads ``<profiles_dir>/<doc_id>.jsonl``
+    and returns the document it holds (a :class:`RegulatoryDocument` for a
+    regulation, an :class:`OperatingProcedure` for the SOP), with an empty
+    ``nodes`` list. This is how applicability work gets at a profile without
+    re-running any extraction — no LLM call, no PDF pass.
+
+    Raises :class:`FileNotFoundError` when the artifact has not been generated
+    yet, and :class:`ValueError` when it predates the current schema.
+    """
+    path = profiles_dir / f"{doc_id}.jsonl"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"no profile artifact at {path}; generate it with "
+            f"`python -m regulator.profiles --all` (or `make profiles`)"
+        )
+    return read_parsed_document(path)
 
 
 # ── One-line summaries for the CLI ──────────────────────
